@@ -140,10 +140,10 @@ function IndexPopup() {
           {/* <p className="mb-2">请确保 <a href={'https://www.bilibili.com'} target='_blank'>网站已登录</a>，然后点击「保存并同步」</p> */}
 
           {data['uuid'] && data['uuid'] === init['uuid'] && (
-            <div className='bg-orange-400 text-white p-2 mb-2 rounded'>{browser.i18n.getMessage('notInitialized')}</div>
+            <div className='mb-2 rounded bg-orange-400 p-2 text-white'>{browser.i18n.getMessage('notInitialized')}</div>
           )}
 
-          <div className='flex gap-2 mb-2'>
+          <div className='mb-2 flex gap-2'>
             <div className='flex items-center gap-0.5'>
               <Radio
                 id='up'
@@ -194,7 +194,7 @@ function IndexPopup() {
                 <div className='left flex-1'>
                   <Input
                     type='text'
-                    className='border-1  my-1 p-2 rounded w-full'
+                    className='border-1 my-1 w-full rounded p-2'
                     placeholder='端对端用户密钥'
                     value={`${data['uuid']}@${data['password']}`}
                     readOnly
@@ -202,7 +202,7 @@ function IndexPopup() {
                 </div>
                 <div className='right'>
                   <Button
-                    className='p-2 my-1 ml-2'
+                    className='my-1 ml-2 p-2'
                     onClick={() => copyToClipboard(`${data['uuid']}@${data['password']}`)}
                   >
                     {browser.i18n.getMessage('copyToken')}
@@ -341,12 +341,12 @@ function IndexPopup() {
 
           {data['type'] && data['type'] == 'pause' && (
             <>
-              <div className='bg-orange-600/10 text-orange-600 border-orange-600/50 dark:bg-orange-300/10 dark:text-orange-300 dark:border-orange-300/50 border p-2 my-2 rounded'>
+              <div className='my-2 rounded border border-orange-600/50 bg-orange-600/10 p-2 text-orange-600 dark:border-orange-300/50 dark:bg-orange-300/10 dark:text-orange-300'>
                 {browser.i18n.getMessage('loginSyncPaused')}
               </div>
             </>
           )}
-          <div className='flex flex-row justify-between mt-1.5'>
+          <div className='mt-1.5 flex flex-row justify-between'>
             <div className='left text-neutral-400'>
               {data['type'] && data['type'] != 'pause' && (
                 <>

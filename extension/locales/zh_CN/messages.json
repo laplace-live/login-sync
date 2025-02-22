@@ -4,7 +4,7 @@
   },
   "appDesc": {
     "message": "LAPLACE Login Sync 是一款用于同步登录状态的工具",
-    "description":"基于 CookieCloud 二次开发，采用端对端加密，保证您的登录信息安全。"
+    "description": "基于 CookieCloud 二次开发，采用端对端加密，保证您的登录信息安全。"
   },
   "syncLoginSessions": {
     "message": "同步登录状态"
@@ -13,7 +13,7 @@
     "message": "暂停同步"
   },
   "copyToken": {
-    "message": "拷贝密钥"
+    "message": "拷贝"
   },
   "reset": {
     "message": "重置"
