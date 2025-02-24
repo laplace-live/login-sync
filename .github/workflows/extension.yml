@@ -13,7 +13,9 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # runs-on: ubuntu-latest
+    # TODO: https://github.com/PlasmoHQ/plasmo/issues/1156
+    runs-on: windows-latest
 
     defaults:
       run:
