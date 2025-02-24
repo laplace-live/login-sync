@@ -9,6 +9,7 @@ import type { RequestBody, ResponseBody } from '~background/messages/config'
 
 import './global.css'
 
+import { Accordion } from '~components/ui/accordion'
 import Button from '~components/ui/button'
 import Input from '~components/ui/input'
 import { Radio } from '~components/ui/radio'
@@ -55,23 +56,28 @@ function IndexPopup() {
       return
     }
 
-    const ret = await sendToBackground<RequestBody, ResponseBody>({
-      name: 'config',
-      body: {
-        payload: {
-          ...data,
-          forceUpdate: true
+    try {
+      const ret = await sendToBackground<RequestBody, ResponseBody>({
+        name: 'config',
+        body: {
+          payload: {
+            ...data,
+            forceUpdate: true
+          }
         }
+      })
+
+      console.log(action + '返回', ret)
+
+      if (ret && ret['message'] == 'done') {
+        if (ret['note']) toast(ret['note'])
+        else toast.success(action + '成功', { id: 'save-sync' })
+      } else {
+        toast.error(action + '失败，请检查填写的信息是否正确', { id: 'save-sync' })
       }
-    })
-
-    console.log(action + '返回', ret)
-
-    if (ret && ret['message'] == 'done') {
-      if (ret['note']) toast(ret['note'])
-      else toast.success(action + '成功', { id: 'save-sync' })
-    } else {
-      toast.error(action + '失败，请检查填写的信息是否正确', { id: 'save-sync' })
+    } catch (error) {
+      console.error('Failed to run test:', error)
+      toast.error(action + '失败：' + String(error), { id: 'test-error' })
     }
 
     setIsLoading(false)
@@ -184,32 +190,30 @@ function IndexPopup() {
               {/* <div className=''>服务器地址</div>
               <input
                 type='text'
-                className='border-1  my-2 p-2 rounded w-full'
+                className='border-1 my-2 w-full rounded p-2'
                 placeholder='请输入服务器地址'
                 value={data['endpoint']}
                 onChange={(e) => onChange('endpoint', e)}
               /> */}
               {/* <div className=''>同步密钥</div> */}
-              <div className='flex flex-row'>
-                <div className='left flex-1'>
+              <div className='flex flex-row items-center gap-1'>
+                <div className='flex-1'>
                   <Input
                     type='text'
-                    className='border-1 my-1 w-full rounded p-2'
+                    className='w-full'
                     placeholder='端对端用户密钥'
                     value={`${data['uuid']}@${data['password']}`}
                     readOnly
                   />
                 </div>
-                <div className='right'>
-                  <Button
-                    className='my-1 ml-2 p-2'
-                    onClick={() => copyToClipboard(`${data['uuid']}@${data['password']}`)}
-                  >
+                <div className='flex items-center gap-1'>
+                  <Button onClick={() => copyToClipboard(`${data['uuid']}@${data['password']}`)}>
                     {browser.i18n.getMessage('copyToken')}
                   </Button>
-                  <Button className='ml-2' color='red' onClick={() => setData(init)} disabled={isLoading}>
+
+                  {/* <Button color='red' onClick={() => setData(init)} disabled={isLoading}>
                     {browser.i18n.getMessage('reset')}
-                  </Button>
+                  </Button> */}
 
                   {/* {data['uuid'] !== init['uuid'] && (
                     <Button
@@ -221,8 +225,42 @@ function IndexPopup() {
                       重新生成
                     </Button>
                   )} */}
+
+                  <Button
+                    onClick={() => {
+                      save(true)
+                    }}
+                    disabled={isLoading}
+                  >
+                    {browser.i18n.getMessage('saveAndSync')}
+                  </Button>
                 </div>
               </div>
+
+              <Accordion
+                items={[
+                  {
+                    id: 'event-fetcher-faq',
+                    label: <div className='flex items-center gap-2'>{browser.i18n.getMessage('advancedSettings')}</div>,
+                    content: (
+                      <div className='flex flex-col gap-2'>
+                        {/* <Input
+                          type='text'
+                          className='border-1 w-full rounded p-2'
+                          placeholder='请输入服务器地址'
+                          value={data['endpoint']}
+                          onChange={(e) => onChange('endpoint', e)}
+                          disabled
+                        /> */}
+
+                        <Button color='red' onClick={() => setData(init)} disabled={isLoading}>
+                          {browser.i18n.getMessage('reset')}
+                        </Button>
+                      </div>
+                    )
+                  }
+                ]}
+              />
 
               {/* <div className=''>用户KEY</div>
               <div className='flex flex-row'>
@@ -340,11 +378,24 @@ function IndexPopup() {
           )}
 
           {data['type'] && data['type'] == 'pause' && (
-            <>
+            <div>
               <div className='my-2 rounded border border-orange-600/50 bg-orange-600/10 p-2 text-orange-600 dark:border-orange-300/50 dark:bg-orange-300/10 dark:text-orange-300'>
                 {browser.i18n.getMessage('loginSyncPaused')}
               </div>
-            </>
+              <div className='flex items-center justify-between'>
+                <div />
+                <div>
+                  <Button
+                    onClick={() => {
+                      save(false)
+                    }}
+                    disabled={isLoading}
+                  >
+                    {browser.i18n.getMessage('save')}
+                  </Button>
+                </div>
+              </div>
+            </div>
           )}
           <div className='mt-1.5 flex flex-row justify-between'>
             <div className='left text-neutral-400'>
@@ -376,19 +427,6 @@ function IndexPopup() {
                   </Button> */}
                 </>
               )}
-            </div>
-            <div className='right'>
-              <Button
-                className=''
-                onClick={() => {
-                  save(data['type'] && data['type'] == 'pause' ? false : true)
-                }}
-                disabled={isLoading}
-              >
-                {data['type'] && data['type'] == 'pause'
-                  ? browser.i18n.getMessage('save')
-                  : browser.i18n.getMessage('saveAndSync')}
-              </Button>
             </div>
           </div>
 

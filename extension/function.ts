@@ -202,9 +202,14 @@ async function get_cookie_by_domains(domains: string[] = [], blacklist: string[]
   } = {}
   // 获取cookie
   if (browser.cookies) {
-    // https://github.com/easychen/CookieCloud/pull/87
-    const cookies = await browser.cookies.getAll({ partitionKey: {} })
-    // console.log('cookies', cookies)
+    // Try with partitionKey first, fall back to empty options if not supported
+    let cookies
+    try {
+      cookies = await browser.cookies.getAll({ partitionKey: {} })
+    } catch (e) {
+      cookies = await browser.cookies.getAll({})
+    }
+
     if (Array.isArray(domains) && domains.length > 0) {
       // console.log('domains', domains)
       for (const domain of domains) {
@@ -251,6 +256,9 @@ export function sleep(ms: number) {
 export function showBadge(text: string, color = 'red', delay = 1000) {
   chrome.action.setBadgeText({
     text: text
+  })
+  chrome.action.setBadgeTextColor({
+    color: [255, 255, 255, 255]
   })
   chrome.action.setBadgeBackgroundColor({
     color: color

@@ -29,5 +29,8 @@
   },
   "save": {
     "message": "保存设置"
+  },
+  "advancedSettings": {
+    "message": "高级设置"
   }
 }

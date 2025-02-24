@@ -29,5 +29,8 @@
   },
   "save": {
     "message": "Save"
+  },
+  "advancedSettings": {
+    "message": "Advanced Settings"
   }
 }
