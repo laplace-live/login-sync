@@ -17,11 +17,19 @@ export interface ConfigProps {
    * 后台保活链接
    */
   keep_live: string
-  with_storage: number
   blacklist: string
   headers: string
   /**
    * 是否强制更新，主要用于手动上传
    */
   forceUpdate: boolean
+  /**
+   * Whether to sync localStorage for laplace.live root domain
+   */
+  sync_laplace_live: boolean
+}
+
+export interface DomainConfig {
+  domain: string
+  localStorage: boolean
 }

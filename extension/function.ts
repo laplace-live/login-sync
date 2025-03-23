@@ -2,8 +2,8 @@ import CryptoJS from 'crypto-js'
 import { gzip } from 'pako'
 import browser from 'webextension-polyfill'
 
-import { DEFAULT_SYNC_SERVER } from '~const'
-import type { ConfigProps } from '~types'
+import { DEFAULT_SYNC_SERVER, STATIC_DOMAINS } from '~const'
+import type { ConfigProps, DomainConfig } from '~types'
 
 function is_firefox() {
   return navigator.userAgent.toLowerCase().indexOf('firefox') > -1
@@ -29,7 +29,7 @@ export async function browser_remove(key: string) {
   return await browser.storage.local.remove(key)
 }
 
-export async function browser_load_all(prefix: string | null = null) {
+export async function browser_load_all(prefix: string | null = null): Promise<Record<string, any>> {
   const result = await browser.storage.local.get(null)
   let ret = result
   // 只返回以prefix开头的key对应的属性
@@ -81,15 +81,18 @@ export async function upload_cookie(payload: ConfigProps) {
     showBadge('err')
     return false
   }
-  const domains = payload['domains']?.trim().length > 0 ? payload['domains']?.trim().split('\n') : []
+
+  // NOTE: as a fork of the original code, we don't use the domains field. so get domains fron const
+  // const domains = payload['domains']?.trim().length > 0 ? payload['domains']?.trim().split('\n') : []
+  const domains = STATIC_DOMAINS.map((config) => config.domain)
 
   const blacklist = payload['blacklist']?.trim().length > 0 ? payload['blacklist']?.trim().split('\n') : []
 
   const cookies = await get_cookie_by_domains(domains, blacklist)
   // console.log(`cookies`, cookies)
 
-  const with_storage = payload['with_storage'] || 0
-  const local_storages = with_storage ? await get_local_storage_by_domains(domains) : {}
+  // Get local storage data for domains where localStorage is enabled
+  const local_storages = await get_local_storage_by_domains(STATIC_DOMAINS)
 
   let headers: {
     [key: string]: string
@@ -124,6 +127,19 @@ export async function upload_cookie(payload: ConfigProps) {
     cookie_data: cookies,
     local_storage_data: local_storages
   })
+
+  // Log detailed upload data
+  console.log('[LAPLACE LOGIN SYNC] Data being uploaded:', {
+    cookies_domains: Object.keys(cookies),
+    cookies_count: Object.values(cookies).reduce((acc, curr) => acc + curr.length, 0),
+    cookies_sample: Object.entries(cookies)
+      .slice(0, 2)
+      .map(([domain, cookies]) => ({ domain, count: cookies.length })),
+    localStorage_domains: Object.keys(local_storages),
+    localStorage_entries_count: Object.values(local_storages).reduce((acc, curr) => acc + Object.keys(curr).length, 0),
+    total_data_size_kb: Math.round(data_to_encrypt.length / 1024)
+  })
+
   const encrypted = CryptoJS.AES.encrypt(data_to_encrypt, the_key).toString()
   // const endpoint = payload['endpoint'].trim().replace(/\/+$/, '') + '/update'
   // Fixed endpoint, always use our builtin server
@@ -178,15 +194,38 @@ export async function upload_cookie(payload: ConfigProps) {
   }
 }
 
-export async function get_local_storage_by_domains(domains: string[] = []) {
-  let ret_storage: { [key: string]: string } = {}
+export async function get_local_storage_by_domains(domainConfigs: DomainConfig[] = []) {
+  let ret_storage: { [key: string]: Record<string, any> } = {}
   const local_storages = await browser_load_all('LS-')
-  if (Array.isArray(domains) && domains.length > 0) {
-    for (const domain of domains) {
+
+  if (Array.isArray(domainConfigs) && domainConfigs.length > 0) {
+    for (const config of domainConfigs) {
+      // Skip domains where localStorage is disabled
+      if (!config.localStorage) continue
+
+      const domain = config.domain
       for (const key in local_storages) {
         if (key.indexOf(domain) >= 0) {
-          console.log('domain 匹配', domain, key)
-          if (typeof local_storages[key] === 'string') {
+          // For laplace.live domain, only include items where localStorage key starts with 'loginSyncOption'
+          if (domain === 'laplace.live') {
+            const storageData = local_storages[key]
+
+            if (storageData && typeof storageData === 'object') {
+              const filteredData: Record<string, any> = {}
+              for (const storageKey in storageData) {
+                if (storageKey.startsWith('loginSyncOption')) {
+                  filteredData[storageKey] = storageData[storageKey]
+                }
+              }
+
+              if (Object.keys(filteredData).length > 0) {
+                console.log('domain matched with whitelist items', domain, Object.keys(filteredData).length)
+                ret_storage[key] = filteredData
+              }
+            }
+          } else {
+            // For other domains, include all keys
+            console.log('domain matched', domain, key)
             ret_storage[key] = local_storages[key]
           }
         }
@@ -221,14 +260,14 @@ async function get_cookie_by_domains(domains: string[] = [], blacklist: string[]
         }
       }
     } else {
-      console.log('domains为空')
+      console.log('domains are empty')
       for (const cookie of cookies) {
         // console.log('the cookie', cookie)
         if (cookie.domain) {
           let in_blacklist = false
           for (const black of blacklist) {
             if (cookie.domain.includes(black)) {
-              console.log('blacklist 匹配', cookie.domain, black)
+              console.log('blacklist matched', cookie.domain, black)
               in_blacklist = true
             }
           }

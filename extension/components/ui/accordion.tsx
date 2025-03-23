@@ -2,7 +2,7 @@
 
 import * as AccordionPrimitive from '@radix-ui/react-accordion'
 import { cva } from 'class-variance-authority'
-import { ChevronDown } from 'lucide-react'
+import { IconChevronDown } from '@tabler/icons-react'
 import * as React from 'react'
 
 import { cn } from '~/utils/cn'
@@ -50,7 +50,7 @@ function AccordionTrigger({ className, children, ...props }: React.ComponentProp
         {...props}
       >
         <div className='font-medium'>{children}</div>
-        <ChevronDown className='size-4 transition-transform duration-200' />
+        <IconChevronDown className='size-4 transition-transform duration-200' />
       </AccordionPrimitive.Trigger>
     </AccordionPrimitive.Header>
   )

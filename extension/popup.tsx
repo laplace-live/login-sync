@@ -11,6 +11,7 @@ import './global.css'
 
 import { Accordion } from '~components/ui/accordion'
 import Button from '~components/ui/button'
+import { Divider } from '~components/ui/divider'
 import Input from '~components/ui/input'
 import { Radio } from '~components/ui/radio'
 import { Toaster } from '~components/ui/sonner'
@@ -28,14 +29,16 @@ function IndexPopup() {
     // "password": "",
     password: String(short_uid.generate()),
     interval: 2,
+    // NOTE: as a fork of the original code, we don't use the domains field. so get domains fron const
+    // This setting does not have any effect, keep it for compatibility
     domains: 'bilibili.com',
     uuid: String(short_uid.generate()),
     type: 'up',
     keep_live: '',
-    with_storage: 0,
     blacklist: 'google.com',
     headers: '',
-    forceUpdate: false
+    forceUpdate: false,
+    sync_laplace_live: false
   }
   const [data, setData] = useState(init)
   const [isLoading, setIsLoading] = useState(false)
@@ -101,6 +104,10 @@ function IndexPopup() {
   function onChange(name: string, e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     // console.log( "e" , name , e.target.value );
     setData({ ...data, [name]: e.target.value ?? '' })
+  }
+
+  function onCheckboxChange(name: string, e: React.ChangeEvent<HTMLInputElement>) {
+    setData({ ...data, [name]: e.target.checked })
   }
 
   function uuid_regen() {
@@ -243,7 +250,7 @@ function IndexPopup() {
                     id: 'event-fetcher-faq',
                     label: <div className='flex items-center gap-2'>{browser.i18n.getMessage('advancedSettings')}</div>,
                     content: (
-                      <div className='flex flex-col gap-2'>
+                      <div className='space-y-2'>
                         {/* <Input
                           type='text'
                           className='border-1 w-full rounded p-2'
@@ -253,9 +260,26 @@ function IndexPopup() {
                           disabled
                         /> */}
 
+                        {/* <div className='flex items-center space-x-2'>
+                          <Checkbox
+                            id='sync-laplace-live'
+                            checked={data['sync_laplace_live']}
+                            onChange={(e) => onCheckboxChange('sync_laplace_live', e)}
+                          />
+                          <Label htmlFor='sync-laplace-live'>Sync settings for laplace.live</Label>
+                        </div>
+
+                        <Divider
+                          label={browser.i18n.getMessage('resetLabel')}
+                          className='-mx-3 before:w-1.5'
+                          extended
+                        /> */}
+
                         <Button color='red' onClick={() => setData(init)} disabled={isLoading}>
                           {browser.i18n.getMessage('reset')}
                         </Button>
+
+                        <p>{browser.i18n.getMessage('resetDesc')}</p>
                       </div>
                     )
                   }
@@ -314,29 +338,6 @@ function IndexPopup() {
 
               {data['type'] && data['type'] == 'up' && (
                 <>
-                  {/* <div className=''>是否同步Local Storage</div>
-                  <div className='my-2'>
-                    <input
-                      type='radio'
-                      id='with-localstorage-on'
-                      name='with-localstorage'
-                      value={1}
-                      checked={data['with_storage'] === '1'}
-                      onChange={(e) => onChange('with_storage', e)}
-                    />
-                    <label htmlFor='with-localstorage-on'>是</label>
-
-                    <input
-                      type='radio'
-                      id='with-localstorage-off'
-                      name='with-localstorage'
-                      value={0}
-                      checked={data['with_storage'] === '0'}
-                      onChange={(e) => onChange('with_storage', e)}
-                    />
-                    <label htmlFor='with-localstorage-off'>否</label>
-                  </div> */}
-
                   {/* <div className=''>请求Header·选填</div>
                   <textarea
                     className='border-1  my-2 p-2 rounded w-full'
@@ -430,7 +431,7 @@ function IndexPopup() {
             </div>
           </div>
 
-          <hr className='my-3' />
+          <Divider label={browser.i18n.getMessage('aboutLabel')} extended className='-mx-3 mb-2 mt-1.5 before:w-1.5' />
 
           {/* <div className='flex gap-2'>
             <a href={'https://www.bilibili.com'} target='_blank'>

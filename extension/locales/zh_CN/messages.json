@@ -16,7 +16,13 @@
     "message": "拷贝"
   },
   "reset": {
+    "message": "重置登录密钥"
+  },
+  "resetLabel": {
     "message": "重置"
+  },
+  "resetDesc": {
+    "message": "点击上方按钮选择一个您喜欢的登录密钥；点击「保存并同步」生效。"
   },
   "notInitialized": {
     "message": "尚未初始化同步，请点击「保存并同步」"
@@ -32,5 +38,8 @@
   },
   "advancedSettings": {
     "message": "高级设置"
+  },
+  "aboutLabel": {
+    "message": "关于"
   }
 }

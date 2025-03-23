@@ -1,6 +1,6 @@
 'use client'
 
-import { Circle } from 'lucide-react'
+import { IconCircle } from '@tabler/icons-react'
 import * as React from 'react'
 
 import { cn } from '~/utils/cn'
@@ -24,7 +24,7 @@ const Radio = React.forwardRef<HTMLInputElement, RadioProps>(({ className, ...pr
       {...props}
     />
     <div className='pointer-events-none absolute flex size-4 items-center justify-center text-white opacity-0 peer-checked:opacity-100 dark:text-neutral-800'>
-      <Circle className='size-2 fill-current' />
+    <IconCircle className='size-2 fill-current' />
     </div>
   </div>
 ))

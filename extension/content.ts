@@ -1,3 +1,5 @@
+import { STATIC_DOMAINS } from '~const'
+
 import { get_local_storage_by_domains, load_data, remove_data, save_data } from './function'
 
 export {}
@@ -6,8 +8,12 @@ window.addEventListener('load', async () => {
   // 获得当前域名
   const host = window.location.hostname
   const config = await load_data('COOKIE_SYNC_SETTING')
-  if (config?.domains) {
-    const domains = config.domains?.trim().split('\n')
+
+  // NOTE: as a fork of the original code, we don't use the domains field. so get domains fron const
+  const domainConfigs = STATIC_DOMAINS
+  const domains = domainConfigs.map((config) => config.domain)
+
+  if (domains) {
     // 检查 domain 是否部分匹配 domains的每一个域名
     let matched = false
     for (const domain of domains) {
