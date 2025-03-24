@@ -6,9 +6,13 @@ on:
       - "master"
     tags:
       - "v*"
+    paths:
+      - "extension/**"
   pull_request:
     branches:
       - "master"
+    paths:
+      - "extension/**"
   workflow_dispatch:
 
 jobs:
@@ -16,6 +20,9 @@ jobs:
     # runs-on: ubuntu-latest
     # TODO: https://github.com/PlasmoHQ/plasmo/issues/1156
     runs-on: windows-latest
+
+    # Skip this job if this is a tag event but no extension files were changed
+    if: ${{ !startsWith(github.ref, 'refs/tags/') || contains(github.event.head_commit.message, 'extension') }}
 
     defaults:
       run:
@@ -68,8 +75,8 @@ jobs:
     name: Publish to store
     runs-on: ubuntu-latest
 
-    # Only publish on tag pushes
-    if: startsWith(github.ref, 'refs/tags/')
+    # Only publish on tag pushes that affect the extension
+    if: ${{ startsWith(github.ref, 'refs/tags/') && contains(github.event.head_commit.message, 'extension') }}
 
     needs:
       - build
@@ -90,8 +97,8 @@ jobs:
     name: GitHub Release
     runs-on: ubuntu-latest
 
-    # Only publish on tag pushes
-    if: startsWith(github.ref, 'refs/tags/')
+    # Only publish on tag pushes that affect the extension
+    if: ${{ startsWith(github.ref, 'refs/tags/') && contains(github.event.head_commit.message, 'extension') }}
 
     needs:
       - build
