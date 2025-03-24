@@ -1,5 +1,6 @@
 import { unlink } from 'node:fs/promises'
 import { Hono } from 'hono'
+import { bodyLimit } from 'hono/body-limit'
 import { cors } from 'hono/cors'
 import { validator } from 'hono/validator'
 import { zValidator } from '@hono/zod-validator'
@@ -26,6 +27,13 @@ const zStringNotEmpty = (msg?: string) =>
     .trim()
     .min(1, { message: msg ?? 'Required!' })
 
+const limiter = bodyLimit({
+  maxSize: 4 * 1024 * 1024, // 4mb
+  onError: () => {
+    return new Response('Body too large 😅', { status: 413 })
+  },
+})
+
 const app = new Hono()
 
 app.use('/update', cors())
@@ -36,7 +44,7 @@ app.all('/', (c) => {
   return c.text(`LAPLACE Login Sync Server`)
 })
 
-app.post('/update', async (c) => {
+app.post('/update', limiter, async (c) => {
   const body = await c.req.arrayBuffer()
   const raw = pako.inflate(body)
   const decoder = new TextDecoder()
