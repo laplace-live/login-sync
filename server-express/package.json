@@ -4,6 +4,9 @@
   "description": "LAPLACE Login Sync Server",
   "type": "module",
   "main": "index.js",
+  "scripts": {
+    "build": "tsx index.ts"
+  },
   "dependencies": {
     "body-parser": "1.20.2",
     "cors": "2.8.5",
@@ -22,7 +25,8 @@
     "@types/multer": "1.4.11",
     "@types/pako": "2.0.3",
     "@types/supertest": "6.0.2",
-    "supertest": "6.3.3"
+    "supertest": "6.3.3",
+    "tsx": "^4.19.3"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
