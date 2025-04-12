@@ -42,7 +42,8 @@ window.addEventListener('load', async () => {
       [key: string]: any
     } = {}
     for (let i = 0; i < keys.length; i++) {
-      console.log(`values[i]`, values[i])
+      // print the key and value for debugging
+      // console.log(`values[i]`, values[i])
 
       result[keys[i]] = values[i]
     }
