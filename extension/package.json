@@ -2,7 +2,7 @@
   "name": "laplace-login-sync",
   "displayName": "__MSG_appTitle__",
   "description": "__MSG_appDesc__",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "author": "s@laplace.live",
   "license": "GPLv3",
   "scripts": {
