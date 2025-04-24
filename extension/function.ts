@@ -157,9 +157,9 @@ export async function upload_cookie(payload: ConfigProps) {
     last_uploaded_info &&
     last_uploaded_info.sha256 === sha256 &&
     // In some rare case (ie when extension loaded in development mode), the .timestamp can be undefined
-    new Date().getTime() - (last_uploaded_info?.timestamp || new Date().getTime()) < 1000 * 60 * 60 * 1
+    new Date().getTime() - (last_uploaded_info?.timestamp || new Date().getTime()) < 1000 * 60 * 20
   ) {
-    console.log('same data in 1 hours, skip')
+    console.log('same data in 20 minutes, skip')
     return {
       action: 'done',
       note: '本地 Cookie 数据无变动，不再上传'
