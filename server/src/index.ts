@@ -45,12 +45,11 @@ app.all('/', (c) => {
 })
 
 app.post('/update', limiter, async (c) => {
-  const body = await c.req.arrayBuffer()
-  const raw = pako.inflate(body)
-  const decoder = new TextDecoder()
-  const text = decoder.decode(raw)
-
   try {
+    const body = await c.req.arrayBuffer()
+    const raw = pako.inflate(body)
+    const decoder = new TextDecoder()
+    const text = decoder.decode(raw)
     const json: CookieRequestBody = JSON.parse(text)
     const { uuid, encrypted } = json
 
