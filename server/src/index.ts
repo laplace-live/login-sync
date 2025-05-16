@@ -153,7 +153,9 @@ app.get(
     if (!data) {
       return c.json({ code: 500, message: 'Internal server error' }, 500)
     } else {
-      return c.json(data)
+      return c.json(data, 200, {
+        'Cache-Control': 'private, max-age=5',
+      })
     }
   }
 )
