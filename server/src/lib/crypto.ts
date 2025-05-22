@@ -21,9 +21,7 @@ export function cryptoHash(
     encoding?: DigestEncoding
   } = {}
 ) {
-  const hasher = key
-    ? new CryptoHasher(algorithm || 'sha256', key)
-    : new CryptoHasher(algorithm || 'sha256')
+  const hasher = key ? new CryptoHasher(algorithm || 'sha256', key) : new CryptoHasher(algorithm || 'sha256')
 
   return hasher.update(input).digest(encoding || 'hex')
 }
@@ -87,46 +85,39 @@ export async function generateDeriveKey(keyStr: string) {
 // https://github.com/brix/crypto-js/issues/468
 // From https://gist.github.com/schakko/2628689?permalink_comment_id=3321113#gistcomment-3321113
 // From https://gist.github.com/chengen/450129cb95c7159cb05001cc6bdbf6a1
-// TODO: type error in vscode but not in cursor, idk why
 export function encryptAes(plainText: string, secret: string) {
   const salt = randomBytes(8)
   const password = Buffer.concat([Buffer.from(secret, 'binary'), salt])
-  const hash = []
+  const hash: Buffer[] = []
   let digest = password
   for (let i = 0; i < 3; i++) {
     hash[i] = createHash('md5').update(digest).digest()
     // hash[i] = new Bun.CryptoHasher('md5').update(digest).digest()
-    digest = Buffer.concat([hash[i], password])
+    digest = Buffer.concat([hash[i]!, password])
   }
   const keyDerivation = Buffer.concat(hash)
   const key = keyDerivation.subarray(0, 32)
   const iv = keyDerivation.subarray(32)
   const cipher = createCipheriv('aes-256-cbc', key, iv)
 
-  const result = Buffer.concat([
-    Buffer.from('Salted__', 'utf8'),
-    salt,
-    cipher.update(plainText),
-    cipher.final(),
-  ])
+  const result = Buffer.concat([Buffer.from('Salted__', 'utf8'), salt, cipher.update(plainText), cipher.final()])
 
   return result.toString('base64')
 }
 
-// TODO: type error in vscode but not in cursor, idk why
 export function decryptAes(encryptedText: string, secret: string) {
   const cypher = Buffer.from(encryptedText, 'base64')
   const salt = cypher.subarray(8, 16)
   const password = Buffer.concat([Buffer.from(secret, 'binary'), salt])
-  const md5Hashes = []
+  const md5Hashes: Buffer[] = []
   let digest = password
   for (let i = 0; i < 3; i++) {
     md5Hashes[i] = createHash('md5').update(digest).digest()
     // md5Hashes[i] = new Bun.CryptoHasher('md5').update(digest).digest()
-    digest = Buffer.concat([md5Hashes[i], password])
+    digest = Buffer.concat([md5Hashes[i]!, password])
   }
-  const key = Buffer.concat([md5Hashes[0], md5Hashes[1]])
-  const iv = md5Hashes[2]
+  const key = Buffer.concat([md5Hashes[0]!, md5Hashes[1]!])
+  const iv = md5Hashes[2]!
   const contents = cypher.subarray(16)
   const decipher = createDecipheriv('aes-256-cbc', key, iv)
 
