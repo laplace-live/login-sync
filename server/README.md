@@ -16,7 +16,7 @@ bun run index.js
 
 ```yaml
 laplace-login-sync:
-  image: ghcr.io/laplace-live/laplace-login-sync-server:latest
+  image: ghcr.io/laplace-live/login-sync-server:latest
   restart: always
   env_file: ./laplace-login-sync.env
   volumes:
