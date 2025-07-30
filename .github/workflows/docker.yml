@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
 
 env:
-  GHCR_SLUG: ghcr.io/laplace-live/laplace-login-sync-server
+  GHCR_SLUG: ghcr.io/laplace-live/login-sync-server
 
 jobs:
   build:

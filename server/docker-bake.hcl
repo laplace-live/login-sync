@@ -1,5 +1,5 @@
 variable "DEFAULT_TAG" {
-  default = ["laplace-live/laplace-login-sync-server:local"]
+  default = ["laplace-live/login-sync-server:local"]
 }
 
 # Special target: https://github.com/docker/metadata-action#bake-definition
