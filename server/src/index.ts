@@ -25,7 +25,7 @@ const zStringNotEmpty = (msg?: string) =>
   z
     .string()
     .trim()
-    .min(1, { message: msg ?? 'Required!' })
+    .min(1, { error: msg ?? 'Required!' })
 
 const limiter = bodyLimit({
   maxSize: 4 * 1024 * 1024, // 4mb
