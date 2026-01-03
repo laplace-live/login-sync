@@ -1,12 +1,12 @@
-import { CryptoHasher, type DigestEncoding, type SupportedCryptoAlgorithms } from 'bun'
 import {
+  type BinaryToTextEncoding,
   createCipheriv,
   createDecipheriv,
   createHash,
   createHmac,
   randomBytes,
-  type BinaryToTextEncoding,
 } from 'node:crypto'
+import { CryptoHasher, type DigestEncoding, type SupportedCryptoAlgorithms } from 'bun'
 
 export function cryptoHash(
   input: Bun.BlobOrStringOrBuffer,
@@ -54,7 +54,7 @@ export async function hashEncode(inputString: string, algo?: string) {
 
 export function hashToString(hashBuffer: ArrayBuffer) {
   const hashArray = Array.from(new Uint8Array(hashBuffer))
-  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
   return hashHex
 }
 

@@ -1,13 +1,7 @@
-import { Bench } from 'tinybench'
 import CryptoJS from 'crypto-js'
-import {
-  cryptoHash,
-  cryptoHmac,
-  decryptAes,
-  encryptAes,
-  hashEncode,
-  hashToString,
-} from './lib/crypto'
+import { Bench } from 'tinybench'
+
+import { cryptoHash, cryptoHmac, decryptAes, encryptAes, hashEncode, hashToString } from './lib/crypto'
 
 const keyStr = 'uuid1234-password12345'
 const strToEncrypt = JSON.stringify({
@@ -32,9 +26,7 @@ console.log(`\ncryptojsSha1Str`, cryptojsSha1Str)
 const cryptojsAesStr = CryptoJS.AES.encrypt(strToEncrypt, cryptojsMd5Str).toString()
 console.log(`\ncryptojsAesStr`, cryptojsAesStr)
 
-const cryptojsAesStrDecrypted = CryptoJS.AES.decrypt(cryptojsAesStr, cryptojsMd5Str).toString(
-  CryptoJS.enc.Utf8
-)
+const cryptojsAesStrDecrypted = CryptoJS.AES.decrypt(cryptojsAesStr, cryptojsMd5Str).toString(CryptoJS.enc.Utf8)
 console.log(`\ncryptojsAesStrDecrypted`, cryptojsAesStrDecrypted)
 
 const apiSha1Str = hashToString(await hashEncode(keyStr, 'SHA-256'))

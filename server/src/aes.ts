@@ -1,7 +1,6 @@
-'use strict'
-
 import assert from 'node:assert'
 import CryptoJS from 'crypto-js'
+
 import { decryptAes, encryptAes } from './lib/crypto'
 
 const secret = 'secretText'

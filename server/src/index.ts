@@ -1,11 +1,11 @@
 import { unlink } from 'node:fs/promises'
+import { zValidator } from '@hono/zod-validator'
 import { Hono } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
 import { cors } from 'hono/cors'
 import { validator } from 'hono/validator'
-import { zValidator } from '@hono/zod-validator'
-import { z } from 'zod'
 import pako from 'pako'
+import { z } from 'zod'
 
 import { cryptoHash, decryptAes } from './lib/crypto'
 
@@ -14,9 +14,9 @@ interface CookieRequestBody {
   encrypted: string
 }
 
-const port = process.env['PORT'] ? parseInt(process.env['PORT'], 10) : 8088
-const useAuth = process.env['LAPLACE_LOGIN_SYNC_AUTH_MODE']
-const auth = process.env['LAPLACE_LOGIN_SYNC_AUTH_KEY']
+const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 8088
+const useAuth = process.env.LAPLACE_LOGIN_SYNC_AUTH_MODE
+const auth = process.env.LAPLACE_LOGIN_SYNC_AUTH_KEY
 
 // this code is inside ./src, so we need to go one level up to access the data folder
 const dataDir = import.meta.dir + '/../data'
@@ -43,11 +43,11 @@ app.use('/update', cors())
 app.use('/remove', cors())
 app.use('/get/:uuid', cors())
 
-app.all('/', (c) => {
+app.all('/', c => {
   return c.text(`LAPLACE Login Sync Server`)
 })
 
-app.post('/update', limiter, async (c) => {
+app.post('/update', limiter, async c => {
   try {
     const body = await c.req.arrayBuffer()
     const raw = pako.inflate(body)
@@ -86,7 +86,7 @@ const removeSchema = z.object({
   token: z.string(),
 })
 
-app.post('/remove', zValidator('form', removeSchema), async (c) => {
+app.post('/remove', zValidator('form', removeSchema), async c => {
   const body = c.req.valid('form')
   const uuid = body.uuid
   const token = body.token
@@ -115,12 +115,12 @@ app.post('/remove', zValidator('form', removeSchema), async (c) => {
           } else {
             return c.json({ code: 403, message: 'Decrpted data error' })
           }
-        } catch (error) {
+        } catch {
           return c.json({ code: 403, message: 'Token error' })
         }
       }
     }
-  } catch (error) {
+  } catch {
     return c.json({ code: 500, message: 'Error removing credentials' })
   }
 })
@@ -139,7 +139,7 @@ app.get(
     }
     return parsed.data
   }),
-  async (c) => {
+  async c => {
     const query = c.req.valid('query')
     const uuid = c.req.param('uuid')
     const authToken = query.auth
@@ -186,7 +186,7 @@ app.post(
     }
     return parsed.data
   }),
-  async (c) => {
+  async c => {
     const form = c.req.valid('json')
     const uuid = c.req.param('uuid')
     const authToken = form.auth
