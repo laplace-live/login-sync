@@ -454,7 +454,7 @@ function IndexPopup() {
                 CookieCloud
               </a>
             </p>
-            <p>Make the web fun again</p>
+            <p>Tech otakus destroy the world</p>
           </div>
         </div>
       </div>
