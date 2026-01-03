@@ -27,6 +27,9 @@ const zStringNotEmpty = (msg?: string) =>
     .trim()
     .min(1, { error: msg ?? 'Required!' })
 
+// Validate UUID (Actually we' re not using UUID, but leave it for backward compatibility)
+const isValidUuid = (uuid: string) => /^[a-zA-Z0-9]+$/.test(uuid)
+
 const limiter = bodyLimit({
   maxSize: 4 * 1024 * 1024, // 4mb
   onError: () => {
@@ -57,6 +60,10 @@ app.post('/update', limiter, async (c) => {
       return c.json({ code: 400, message: 'Request body error' }, 400)
     }
 
+    if (!isValidUuid(uuid)) {
+      return c.json({ code: 400, message: 'Invalid data format' }, 400)
+    }
+
     const filePath = `${dataDir}/${uuid}.json`
     const content = JSON.stringify({ encrypted })
 
@@ -83,6 +90,10 @@ app.post('/remove', zValidator('form', removeSchema), async (c) => {
   const body = c.req.valid('form')
   const uuid = body.uuid
   const token = body.token
+
+  if (!isValidUuid(uuid)) {
+    return c.json({ code: 400, message: 'Invalid data format' }, 400)
+  }
 
   try {
     const filePath = `${dataDir}/${uuid}.json`
@@ -137,7 +148,7 @@ app.get(
       return c.json({ code: 403, message: 'Unauthorized' }, 403)
     }
 
-    if (!uuid) {
+    if (!uuid || !isValidUuid(uuid)) {
       return c.json({ code: 400, message: 'Bad request' }, 400)
     }
 
@@ -184,7 +195,7 @@ app.post(
       return c.json({ code: 403, message: 'Unauthorized' }, 403)
     }
 
-    if (!uuid) {
+    if (!uuid || !isValidUuid(uuid)) {
       return c.json({ code: 400, message: 'Bad request' }, 400)
     }
 
