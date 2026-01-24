@@ -8,6 +8,6 @@ This document outlines LAPLACE's vulnerability disclosure policy. For more infor
 
 Instead, please email us at [s@laplace.live](mailto:s@laplace.live) with details and steps to reproduce.
 
-We commit to acknowledging vulnerability reports immediately, and will work to fix active vulnerabilities as soon as we can. Critical incidents will be communicated via email to all affected users.
+I commit to acknowledging vulnerability reports immediately, and will work to fix active vulnerabilities as soon as I can. Critical incidents will be communicated via email to all affected users.
 
-We appreciate your help in making LAPLACE more secure for everyone. Thank you for your support and responsible disclosure.
+I appreciate your help in making LAPLACE more secure for everyone. Thank you for your support and responsible disclosure.
