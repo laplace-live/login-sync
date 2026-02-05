@@ -8,6 +8,7 @@ import pako from 'pako'
 import { z } from 'zod'
 
 import { cryptoHash, decryptAes } from './lib/crypto'
+import { timingSafeEqual } from './utils/timingSafeEqual'
 
 interface CookieRequestBody {
   uuid: string
@@ -99,7 +100,7 @@ app.post('/remove', zValidator('form', removeSchema), async c => {
     const filePath = `${dataDir}/${uuid}.json`
 
     if (!(await Bun.file(filePath).exists())) {
-      return c.json({ code: 404, message: 'Credentials not found' }, 404)
+      return c.json({ code: 403, message: 'Invalid credentials' }, 403)
     } else {
       const data = JSON.parse(await Bun.file(filePath).text())
 
@@ -113,10 +114,10 @@ app.post('/remove', zValidator('form', removeSchema), async c => {
             await unlink(filePath)
             return c.json({ code: 200, message: 'Done' })
           } else {
-            return c.json({ code: 403, message: 'Decrpted data error' })
+            return c.json({ code: 403, message: 'Invalid credentials' })
           }
         } catch {
-          return c.json({ code: 403, message: 'Token error' })
+          return c.json({ code: 403, message: 'Invalid credentials' })
         }
       }
     }
@@ -144,7 +145,7 @@ app.get(
     const uuid = c.req.param('uuid')
     const authToken = query.auth
 
-    if (useAuth !== undefined && auth && auth !== authToken) {
+    if (useAuth !== undefined && auth && (!authToken || !timingSafeEqual(auth, authToken))) {
       return c.json({ code: 403, message: 'Unauthorized' }, 403)
     }
 
@@ -154,15 +155,16 @@ app.get(
 
     const filePath = `${dataDir}/${uuid}.json`
 
-    if (!(await Bun.file(filePath).exists())) {
-      return c.json({ code: 404, message: 'Not found' }, 404)
+    const file = Bun.file(filePath)
+    if (!(await file.exists())) {
+      return c.json({ code: 403, message: 'Invalid credentials' }, 403)
     }
 
-    const data = JSON.parse(await Bun.file(filePath).text())
+    const data = JSON.parse(await file.text())
 
     // This condition is requied because we need to validate `data` first to avoid malformed content
     if (!data) {
-      return c.json({ code: 500, message: 'Internal server error' }, 500)
+      return c.json({ code: 403, message: 'Invalid credentials' }, 403)
     } else {
       return c.json(data, 200, {
         'Cache-Control': 'private, max-age=5',
@@ -191,7 +193,7 @@ app.post(
     const uuid = c.req.param('uuid')
     const authToken = form.auth
 
-    if (useAuth !== undefined && auth && auth !== authToken) {
+    if (useAuth !== undefined && auth && (!authToken || !timingSafeEqual(auth, authToken))) {
       return c.json({ code: 403, message: 'Unauthorized' }, 403)
     }
 
@@ -201,15 +203,16 @@ app.post(
 
     const filePath = `${dataDir}/${uuid}.json`
 
-    if (!(await Bun.file(filePath).exists())) {
-      return c.json({ code: 404, message: 'Not found' }, 404)
+    const file = Bun.file(filePath)
+    if (!(await file.exists())) {
+      return c.json({ code: 403, message: 'Invalid credentials' }, 403)
     }
 
-    const data = JSON.parse(await Bun.file(filePath).text())
+    const data = JSON.parse(await file.text())
 
     // This condition is requied because we need to validate `data` first to avoid malformed content
     if (!data) {
-      return c.json({ code: 500, message: 'Internal server error' }, 500)
+      return c.json({ code: 403, message: 'Invalid credentials' }, 403)
     } else {
       const password = form.password
 
