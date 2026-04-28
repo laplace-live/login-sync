@@ -1,5 +1,5 @@
 import { STATIC_DOMAINS } from '@/lib/const'
-import { load_data, remove_data, save_data } from '@/lib/storage'
+import { loadData, removeData, saveData } from '@/lib/storage'
 
 export default defineContentScript({
   matches: ['*://*.bilibili.com/*', '*://*.laplace.live/*'],
@@ -7,7 +7,7 @@ export default defineContentScript({
   async main() {
     window.addEventListener('load', async () => {
       const host = window.location.hostname
-      const config = await load_data('COOKIE_SYNC_SETTING')
+      const config = await loadData('COOKIE_SYNC_SETTING')
 
       // NOTE: as a fork of the original code, we don't use the domains field. so get domains fron const
       const domainConfigs = STATIC_DOMAINS
@@ -23,13 +23,13 @@ export default defineContentScript({
       }
 
       if (config?.type && config.type === 'down') {
-        const the_data = await load_data('LS-' + host)
-        if (the_data) {
-          for (const key in the_data) {
-            localStorage.setItem(key, the_data[key])
+        const stored = await loadData('LS-' + host)
+        if (stored) {
+          for (const key in stored) {
+            localStorage.setItem(key, stored[key])
           }
           // 清空浏览器的storage，避免多次覆盖
-          await remove_data('LS-' + host)
+          await removeData('LS-' + host)
         }
       } else {
         const all = localStorage
@@ -42,8 +42,11 @@ export default defineContentScript({
           result[keys[i]] = values[i]
         }
         if (Object.keys(result).length > 0) {
-          await save_data('LS-' + host, result)
-          console.log('save to storage', host, result)
+          await saveData('LS-' + host, result)
+          console.debug('[laplace] localStorage mirrored', {
+            host,
+            keys: Object.keys(result).length,
+          })
         }
       }
     })

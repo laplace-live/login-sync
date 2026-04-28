@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import short_uid from 'short-uuid'
+import shortUid from 'short-uuid'
 import { toast } from 'sonner'
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
@@ -9,7 +9,7 @@ import {Input} from '@/components/ui/input'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Toaster } from '@/components/ui/sonner'
 import { sendSync } from '@/lib/messaging'
-import { load_data, save_data } from '@/lib/storage'
+import { loadData, saveData } from '@/lib/storage'
 import type { ConfigProps } from '@/lib/types'
 import { Alert } from '@/components/ui/alert'
 import { DEFAULT_SYNC_SERVER } from '@/lib/const'
@@ -17,12 +17,12 @@ import { DEFAULT_SYNC_SERVER } from '@/lib/const'
 function App() {
   const init: ConfigProps = {
     endpoint: DEFAULT_SYNC_SERVER,
-    password: String(short_uid.generate()),
+    password: String(shortUid.generate()),
     interval: 2,
     // NOTE: as a fork of the original code, we don't use the domains field. so get domains fron const
     // This setting does not have any effect, keep it for compatibility
     domains: 'bilibili.com',
-    uuid: String(short_uid.generate()),
+    uuid: String(shortUid.generate()),
     type: 'up',
     keep_live: '',
     blacklist: 'google.com',
@@ -34,7 +34,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false)
 
   async function test(action = '测试') {
-    console.log('request,begin')
+    console.debug('[laplace] sync request')
     setIsLoading(true)
 
     if (!data['endpoint'] || !data['password'] || !data['uuid'] || !data['type']) {
@@ -58,7 +58,7 @@ function App() {
         },
       })
 
-      console.log(action + '返回', ret)
+      console.log('[laplace] sync response', ret)
 
       if (ret && ret['message'] === 'done') {
         if (ret['note']) toast(ret['note'])
@@ -67,7 +67,7 @@ function App() {
         toast.error(action + '失败，请检查填写的信息是否正确', { id: 'save-sync' })
       }
     } catch (error) {
-      console.error('Failed to run test:', error)
+      console.error('[laplace] sync request failed', error)
       toast.error(action + '失败：' + String(error), { id: 'test-error' })
     }
 
@@ -79,9 +79,9 @@ function App() {
       toast('请填写完整的信息', { id: 'saveError' })
       return
     }
-    await save_data('COOKIE_SYNC_SETTING', data)
-    const ret = await load_data('COOKIE_SYNC_SETTING')
-    console.log('load', ret)
+    await saveData('COOKIE_SYNC_SETTING', data)
+    const ret = await loadData('COOKIE_SYNC_SETTING')
+    console.debug('[laplace] config saved', ret)
     if (JSON.stringify(ret) === JSON.stringify(data)) {
       push && test('手动同步')
       toast.info('保存成功', { id: 'save-sync' })
@@ -102,11 +102,11 @@ function App() {
   }
 
   useEffect(() => {
-    async function load_config() {
-      const ret = await load_data('COOKIE_SYNC_SETTING')
+    async function loadConfig() {
+      const ret = await loadData('COOKIE_SYNC_SETTING')
       if (ret) setData({ ...data, ...ret })
     }
-    load_config()
+    loadConfig()
   }, [])
 
   return (
@@ -213,9 +213,9 @@ function App() {
             <a href='https://laplace.live' target='_blank' className='font-semibold text-ac'>
               LAPLACE
             </a>
-            , based on{' '}
-            <a href='https://github.com/easychen/CookieCloud' target='_blank' className='font-semibold text-ac'>
-              CookieCloud
+            , source code on{' '}
+            <a href='https://github.com/laplace-live/login-sync' target='_blank' className='font-semibold text-ac'>
+              GitHub
             </a>
           </p>
           <p>Tech otakus destroy the world</p>

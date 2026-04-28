@@ -1,13 +1,9 @@
-import { sleep, upload_cookie } from '@/lib/sync'
-import { load_data } from '@/lib/storage'
 import type { SyncRequest, SyncResponse } from '@/lib/messaging'
+import { loadData } from '@/lib/storage'
+import { sleep, uploadCookie } from '@/lib/sync'
 import type { ConfigProps } from '@/lib/types'
 
-export const life = 42
-
 export default defineBackground(() => {
-  console.log(`HELLO WORLD - ${life}`)
-
   browser.runtime.onInstalled.addListener((details) => {
     if (details.reason === 'install' || details.reason === 'update') {
       browser.alarms.create('bg_1_minute', {
@@ -20,11 +16,11 @@ export default defineBackground(() => {
   browser.alarms.onAlarm.addListener(async (a) => {
     if (a.name !== 'bg_1_minute') return
 
-    const config: ConfigProps = await load_data('COOKIE_SYNC_SETTING')
+    const config: ConfigProps = await loadData('COOKIE_SYNC_SETTING')
     if (!config) return
 
     if (config.type && config.type === 'pause') {
-      console.log('暂停模式，不同步')
+      console.debug('[laplace] sync paused')
       return true
     }
 
@@ -34,47 +30,52 @@ export default defineBackground(() => {
     const hour = now.getHours()
     const day = now.getDate()
     // Total minutes from the begining of this month
-    const minute_count = (day * 24 + hour) * 60 + minute
+    const minuteCount = (day * 24 + hour) * 60 + minute
 
     if (config.uuid) {
       // 如果时间间隔可以整除分钟数，则进行同步
-      if (config.interval < 1 || minute_count % config.interval === 0) {
-        console.log(`同步时间到 ${minute_count} ${config.interval}`)
-        const result = await upload_cookie(config)
-        if (result && result['action'] === 'done') console.log('上传成功')
-        else console.log(result)
+      if (config.interval < 1 || minuteCount % config.interval === 0) {
+        console.log('[laplace] sync tick', { minute: minuteCount, every: config.interval })
+        const result = await uploadCookie(config)
+        if (result && result['action'] === 'done') console.log('[laplace] upload ok')
+        else console.warn('[laplace] upload not done', result)
       } else {
-        console.log(`未到同步时间 ${minute_count} ${config.interval}`)
+        console.debug('[laplace] sync skip (off-cycle)', {
+          minute: minuteCount,
+          every: config.interval,
+        })
       }
     }
 
     if (config.keep_live) {
       // 按行分割，每行的格式为 url|interval
-      const keep_live = config.keep_live?.trim()?.split('\n')
-      for (let i = 0; i < keep_live.length; i++) {
-        const line = keep_live[i]
+      const keepLiveLines = config.keep_live?.trim()?.split('\n')
+      for (let i = 0; i < keepLiveLines.length; i++) {
+        const line = keepLiveLines[i]
         const parts = line.split('|')
         const url = parts[0]
         const interval = parts[1] ? parseInt(parts[1]) : 60
-        if (interval > 0 && minute_count % interval === 0) {
-          console.log(`keep live ${url} ${minute_count} ${interval}`)
+        if (interval > 0 && minuteCount % interval === 0) {
+          console.log('[laplace] keep-alive tick', { url, every: interval })
 
           // 查询是否已经打开目标页面，如果已经打开，则不再打开
           // 除了没有必要以外，还能避免因为网络延迟导致的重复打开
-          const [exists_tab] = await browser.tabs.query({
+          const [existingTab] = await browser.tabs.query({
             url: `${url.trim().replace(/\/+$/, '')}/*`,
           })
-          if (exists_tab && exists_tab.id) {
-            console.log(`tab已存在 ${exists_tab.id}`, exists_tab)
-            if (!exists_tab.active) {
-              console.log('后台状态，刷新页面')
-              await browser.tabs.reload(exists_tab.id)
+          if (existingTab && existingTab.id) {
+            if (!existingTab.active) {
+              console.log('[laplace] keep-alive: reloading background tab', {
+                id: existingTab.id,
+                url,
+              })
+              await browser.tabs.reload(existingTab.id)
             } else {
-              console.log('前台状态，跳过')
+              console.debug('[laplace] keep-alive: tab focused, skip', { id: existingTab.id, url })
             }
             return true
           } else {
-            console.log('tab不存在，后台打开')
+            console.log('[laplace] keep-alive: opening background tab', { url })
           }
 
           const tab = await browser.tabs.create({
@@ -98,7 +99,7 @@ export default defineBackground(() => {
       const payload = message.payload
       if (!payload || !payload['type']) return false
 
-      upload_cookie(payload).then((result) => {
+      uploadCookie(payload).then((result) => {
         if (result && typeof result === 'object') {
           sendResponse({
             message: result['action'] ?? 'fail',
