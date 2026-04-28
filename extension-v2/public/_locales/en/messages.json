@@ -24,6 +24,27 @@
   "resetDesc": {
     "message": "Click the above button to choose a new sync token you prefer. Click Save and Sync to take effect."
   },
+  "resetConfirmTitle": {
+    "message": "Reset sync token?"
+  },
+  "resetConfirmDesc": {
+    "message": "This generates a brand-new token. Data on the server tied to your current token will no longer be accessible."
+  },
+  "resetConfirmCancel": {
+    "message": "Cancel"
+  },
+  "resetConfirmAction": {
+    "message": "Reset"
+  },
+  "restorePrevious": {
+    "message": "Restore Previous Token"
+  },
+  "restorePreviousDesc": {
+    "message": "Restore the sync token from before your last reset. Remember to click Save and Sync afterwards."
+  },
+  "resetUndo": {
+    "message": "Undo"
+  },
   "notInitialized": {
     "message": "Extension not initialized, please click Save and Sync"
   },

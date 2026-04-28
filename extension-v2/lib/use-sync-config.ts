@@ -3,11 +3,20 @@ import shortUid from 'short-uuid'
 
 import type { ConfigProps } from './types'
 
-import { DEFAULT_SYNC_SERVER, STORAGE_KEY_CONFIG } from './const'
+import { DEFAULT_SYNC_SERVER, STORAGE_KEY_CONFIG, STORAGE_KEY_CONFIG_PREVIOUS } from './const'
 import { sendSync } from './messaging'
-import { loadData, saveData } from './storage'
+import { loadData, removeData, saveData } from './storage'
 
 export type SyncStatus = 'loading' | 'idle' | 'saving' | 'syncing'
+
+/**
+ * A snapshot of the user's previous config, captured right before a Reset.
+ * Used to power the "restore previous credentials" recovery path.
+ */
+export interface PreviousConfig {
+  config: ConfigProps
+  savedAt: number
+}
 
 /**
  * Build a fresh default config with newly-generated uuid/password.
@@ -47,15 +56,24 @@ export function useSyncConfig() {
   // once. Drives the "not initialized yet" warning in a way that survives
   // re-renders (the previous `data.uuid === init.uuid` check did not).
   const [isPersisted, setIsPersisted] = useState(false)
+  const [previousConfig, setPreviousConfig] = useState<PreviousConfig | null>(null)
+  // Gate to prevent a double-Reset from overwriting the recovery snapshot
+  // with the just-generated defaults. Flips back on after a real save.
+  const [canStash, setCanStash] = useState(false)
 
   useEffect(() => {
     let cancelled = false
-    loadData(STORAGE_KEY_CONFIG).then((stored: ConfigProps | null) => {
+    Promise.all([
+      loadData(STORAGE_KEY_CONFIG) as Promise<ConfigProps | null>,
+      loadData(STORAGE_KEY_CONFIG_PREVIOUS) as Promise<PreviousConfig | null>,
+    ]).then(([stored, prev]) => {
       if (cancelled) return
       if (stored) {
-        setConfig(prev => ({ ...prev, ...stored }))
+        setConfig(c => ({ ...c, ...stored }))
         setIsPersisted(true)
+        setCanStash(true)
       }
+      if (prev?.config) setPreviousConfig(prev)
       setStatus('idle')
     })
     return () => {
@@ -63,7 +81,12 @@ export function useSyncConfig() {
     }
   }, [])
 
-  const save = useCallback(async (next: ConfigProps) => {
+  /**
+   * Internal write — always overwrites the current config slot. Does not
+   * touch `canStash` so callers (`save`, `reset`, `restorePrevious`) can
+   * decide whether the next reset should snapshot.
+   */
+  const persist = useCallback(async (next: ConfigProps) => {
     const error = validateConfig(next)
     if (error) throw new Error(error)
     setStatus('saving')
@@ -75,6 +98,16 @@ export function useSyncConfig() {
       setStatus('idle')
     }
   }, [])
+
+  const save = useCallback(
+    async (next: ConfigProps) => {
+      await persist(next)
+      // A normal save means the current config is "fresh content" — the next
+      // reset should snapshot it for recovery.
+      setCanStash(true)
+    },
+    [persist]
+  )
 
   const sync = useCallback(async () => {
     if (config.type === 'pause') throw new Error('暂停状态不能同步')
@@ -96,9 +129,33 @@ export function useSyncConfig() {
     }
   }, [config])
 
-  // Wipes back to factory defaults AND persists, so the next popup open and
-  // the background alarm both see the cleared state.
-  const reset = useCallback(() => save(getDefaultConfig()), [save])
+  /**
+   * Snapshots the current config (uuid/password etc.) into the recovery
+   * slot, then writes factory defaults. Only stashes when there's something
+   * meaningful to preserve and the recovery slot hasn't already captured it.
+   */
+  const reset = useCallback(async () => {
+    if (canStash && isPersisted) {
+      const snapshot: PreviousConfig = { config, savedAt: Date.now() }
+      await saveData(STORAGE_KEY_CONFIG_PREVIOUS, snapshot)
+      setPreviousConfig(snapshot)
+    }
+    await persist(getDefaultConfig())
+    setCanStash(false)
+  }, [canStash, config, isPersisted, persist])
+
+  /**
+   * Restores the snapshot taken by the most recent `reset()` and clears it.
+   * After restoring, the next reset is gated again until the user makes a
+   * real save, so accidental re-resets don't lose the just-restored config.
+   */
+  const restorePrevious = useCallback(async () => {
+    if (!previousConfig) throw new Error('没有可恢复的密钥')
+    await persist(previousConfig.config)
+    await removeData(STORAGE_KEY_CONFIG_PREVIOUS)
+    setPreviousConfig(null)
+    setCanStash(false)
+  }, [persist, previousConfig])
 
   return {
     config,
@@ -106,7 +163,9 @@ export function useSyncConfig() {
     save,
     sync,
     reset,
+    restorePrevious,
     status,
     isPersisted,
+    previousConfig,
   }
 }

@@ -21,7 +21,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       toastOptions={{
         unstyled: true,
         classNames: {
-          toast: 'group floating p-4 rounded-lg flex gap-2 items-center w-(--width)',
+          toast: 'group floating p-3 rounded-lg flex gap-2 items-center w-(--width)',
           title: 'font-medium text-sm',
           description: 'text-sm text-fg/60',
           // closeButton:

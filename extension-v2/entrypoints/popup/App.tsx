@@ -6,6 +6,17 @@ import { useSyncConfig } from '@/lib/use-sync-config'
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Alert } from '@/components/ui/alert'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
@@ -16,8 +27,16 @@ function describeError(err: unknown): string {
   return err instanceof Error ? err.message : String(err)
 }
 
+function relativeTime(ts: number): string {
+  const seconds = Math.floor((Date.now() - ts) / 1000)
+  if (seconds < 60) return '刚刚'
+  if (seconds < 3600) return `${Math.floor(seconds / 60)} 分钟前`
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)} 小时前`
+  return `${Math.floor(seconds / 86400)} 天前`
+}
+
 function App() {
-  const { config, setConfig, save, sync, reset, status, isPersisted } = useSyncConfig()
+  const { config, setConfig, save, sync, reset, restorePrevious, status, isPersisted, previousConfig } = useSyncConfig()
   const isBusy = status !== 'idle'
 
   async function handleSave({ andSync }: { andSync: boolean }) {
@@ -38,9 +57,28 @@ function App() {
   async function handleReset() {
     try {
       await reset()
-      toast.success('已重置为默认配置', { id: 'save-sync' })
+      toast.success('已重置为新的登录密钥', {
+        id: 'save-sync',
+        duration: 8000,
+        action: {
+          label: browser.i18n.getMessage('resetUndo'),
+          onClick: () => {
+            void handleRestore()
+          },
+        },
+      })
     } catch (err) {
       console.error('[laplace] reset failed', err)
+      toast.error(describeError(err), { id: 'save-sync' })
+    }
+  }
+
+  async function handleRestore() {
+    try {
+      await restorePrevious()
+      toast.success('已恢复上次登录密钥', { id: 'save-sync' })
+    } catch (err) {
+      console.error('[laplace] restore failed', err)
       toast.error(describeError(err), { id: 'save-sync' })
     }
   }
@@ -105,11 +143,39 @@ function App() {
               <AccordionItem value='advanced-settings'>
                 <AccordionTrigger>{browser.i18n.getMessage('advancedSettings')}</AccordionTrigger>
                 <AccordionContent className='space-y-2'>
-                  <Button tint='red' size='sm' onClick={handleReset} disabled={isBusy}>
-                    {browser.i18n.getMessage('reset')}
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button tint='red' size='sm' disabled={isBusy}>
+                        {browser.i18n.getMessage('reset')}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent size='sm'>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>{browser.i18n.getMessage('resetConfirmTitle')}</AlertDialogTitle>
+                        <AlertDialogDescription>{browser.i18n.getMessage('resetConfirmDesc')}</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>{browser.i18n.getMessage('resetConfirmCancel')}</AlertDialogCancel>
+                        <AlertDialogAction tint='red' variant='solid' onClick={handleReset}>
+                          {browser.i18n.getMessage('resetConfirmAction')}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
 
                   <p className='text-fg/60'>{browser.i18n.getMessage('resetDesc')}</p>
+
+                  {previousConfig && (
+                    <div className='space-y-2 border-fg/10 border-t pt-2'>
+                      <Button tint='accent' size='sm' onClick={handleRestore} disabled={isBusy}>
+                        {browser.i18n.getMessage('restorePrevious')}
+                      </Button>
+                      <p className='text-fg/60'>
+                        {browser.i18n.getMessage('restorePreviousDesc')}{' '}
+                        <span className='text-fg/40'>({relativeTime(previousConfig.savedAt)})</span>
+                      </p>
+                    </div>
+                  )}
                 </AccordionContent>
               </AccordionItem>
             </Accordion>

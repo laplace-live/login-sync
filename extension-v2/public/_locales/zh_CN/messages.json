@@ -24,6 +24,27 @@
   "resetDesc": {
     "message": "点击上方按钮选择一个您喜欢的登录密钥；点击「保存并同步」生效。"
   },
+  "resetConfirmTitle": {
+    "message": "确认重置登录密钥？"
+  },
+  "resetConfirmDesc": {
+    "message": "重置后将生成新的密钥，原密钥关联的服务器数据将无法继续访问"
+  },
+  "resetConfirmCancel": {
+    "message": "取消"
+  },
+  "resetConfirmAction": {
+    "message": "确认重置"
+  },
+  "restorePrevious": {
+    "message": "恢复上次密钥"
+  },
+  "restorePreviousDesc": {
+    "message": "恢复上次重置前的登录密钥。恢复后请记得点击「保存并同步」。"
+  },
+  "resetUndo": {
+    "message": "撤销"
+  },
   "notInitialized": {
     "message": "尚未初始化同步，请点击「保存并同步」"
   },
