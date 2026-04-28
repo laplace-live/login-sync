@@ -8,7 +8,6 @@ LAPLACE Login Sync browser extension
 - React
 - Tailwind CSS
 - crypto-js, pako, sonner, Radix UI, Tabler Icons
-- Bun for installs and CI
 
 ## Develop
 
