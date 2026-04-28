@@ -1,7 +1,9 @@
 import type { SyncRequest, SyncResponse } from '@/lib/messaging'
+import type { ConfigProps } from '@/lib/types'
+
+import { STORAGE_KEY_CONFIG } from '@/lib/const'
 import { loadData } from '@/lib/storage'
 import { sleep, uploadCookie } from '@/lib/sync'
-import type { ConfigProps } from '@/lib/types'
 
 export default defineBackground(() => {
   browser.runtime.onInstalled.addListener((details) => {
@@ -16,7 +18,7 @@ export default defineBackground(() => {
   browser.alarms.onAlarm.addListener(async (a) => {
     if (a.name !== 'bg_1_minute') return
 
-    const config: ConfigProps = await loadData('COOKIE_SYNC_SETTING')
+    const config: ConfigProps = await loadData(STORAGE_KEY_CONFIG)
     if (!config) return
 
     if (config.type && config.type === 'pause') {

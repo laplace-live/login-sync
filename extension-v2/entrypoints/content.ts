@@ -1,4 +1,4 @@
-import { STATIC_DOMAINS } from '@/lib/const'
+import { STATIC_DOMAINS, STORAGE_KEY_CONFIG } from '@/lib/const'
 import { loadData, removeData, saveData } from '@/lib/storage'
 
 export default defineContentScript({
@@ -7,7 +7,7 @@ export default defineContentScript({
   async main() {
     window.addEventListener('load', async () => {
       const host = window.location.hostname
-      const config = await loadData('COOKIE_SYNC_SETTING')
+      const config = await loadData(STORAGE_KEY_CONFIG)
 
       // NOTE: as a fork of the original code, we don't use the domains field. so get domains fron const
       const domainConfigs = STATIC_DOMAINS

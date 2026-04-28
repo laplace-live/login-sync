@@ -1,127 +1,70 @@
-import { useEffect, useState } from 'react'
-import shortUid from 'short-uuid'
 import { toast } from 'sonner'
 
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
-import {Button} from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
-import {Input} from '@/components/ui/input'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Toaster } from '@/components/ui/sonner'
-import { sendSync } from '@/lib/messaging'
-import { loadData, saveData } from '@/lib/storage'
 import type { ConfigProps } from '@/lib/types'
+
+import { useSyncConfig } from '@/lib/use-sync-config'
+
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Alert } from '@/components/ui/alert'
-import { DEFAULT_SYNC_SERVER } from '@/lib/const'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Separator } from '@/components/ui/separator'
+import { Toaster } from '@/components/ui/sonner'
+
+function describeError(err: unknown): string {
+  return err instanceof Error ? err.message : String(err)
+}
 
 function App() {
-  const init: ConfigProps = {
-    endpoint: DEFAULT_SYNC_SERVER,
-    password: String(shortUid.generate()),
-    interval: 2,
-    // NOTE: as a fork of the original code, we don't use the domains field. so get domains fron const
-    // This setting does not have any effect, keep it for compatibility
-    domains: 'bilibili.com',
-    uuid: String(shortUid.generate()),
-    type: 'up',
-    keep_live: '',
-    blacklist: 'google.com',
-    headers: '',
-    forceUpdate: false,
-    sync_laplace_live: false,
-  }
-  const [data, setData] = useState(init)
-  const [isLoading, setIsLoading] = useState(false)
+  const { config, setConfig, save, sync, reset, status, isPersisted } = useSyncConfig()
+  const isBusy = status !== 'idle'
 
-  async function test(action = '测试') {
-    console.debug('[laplace] sync request')
-    setIsLoading(true)
-
-    if (!data['endpoint'] || !data['password'] || !data['uuid'] || !data['type']) {
-      setIsLoading(false)
-      toast('请填写完整的信息')
-      return
-    }
-
-    if (data['type'] === 'pause') {
-      setIsLoading(false)
-      toast('暂停状态不能' + action)
-      return
-    }
-
+  async function handleSave({ andSync }: { andSync: boolean }) {
     try {
-      const ret = await sendSync({
-        type: 'config',
-        payload: {
-          ...data,
-          forceUpdate: true,
-        },
-      })
-
-      console.log('[laplace] sync response', ret)
-
-      if (ret && ret['message'] === 'done') {
-        if (ret['note']) toast(ret['note'])
-        else toast.success(action + '成功', { id: 'save-sync' })
+      await save(config)
+      if (andSync && config.type !== 'pause') {
+        const ret = await sync()
+        toast.success(ret.note ?? '手动同步成功', { id: 'save-sync' })
       } else {
-        toast.error(action + '失败，请检查填写的信息是否正确', { id: 'save-sync' })
+        toast.success('保存成功', { id: 'save-sync' })
       }
-    } catch (error) {
-      console.error('[laplace] sync request failed', error)
-      toast.error(action + '失败：' + String(error), { id: 'test-error' })
-    }
-
-    setIsLoading(false)
-  }
-
-  async function save(push: boolean) {
-    if (!data['endpoint'] || !data['password'] || !data['uuid'] || !data['type']) {
-      toast('请填写完整的信息', { id: 'saveError' })
-      return
-    }
-    await saveData('COOKIE_SYNC_SETTING', data)
-    const ret = await loadData('COOKIE_SYNC_SETTING')
-    console.debug('[laplace] config saved', ret)
-    if (JSON.stringify(ret) === JSON.stringify(data)) {
-      push && test('手动同步')
-      toast.info('保存成功', { id: 'save-sync' })
+    } catch (err) {
+      console.error('[laplace] save/sync failed', err)
+      toast.error(describeError(err), { id: 'save-sync' })
     }
   }
 
-  function onChange(name: string, e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
-    setData({ ...data, [name]: e.target.value ?? '' })
+  async function handleReset() {
+    try {
+      await reset()
+      toast.success('已重置为默认配置', { id: 'save-sync' })
+    } catch (err) {
+      console.error('[laplace] reset failed', err)
+      toast.error(describeError(err), { id: 'save-sync' })
+    }
   }
 
   async function copyToClipboard(text: string) {
     try {
       await navigator.clipboard.writeText(text)
-      toast('已拷贝到剪切板', { id: 'copySuccess' })
+      toast('已拷贝到剪切板', { id: 'copy-clipboard' })
     } catch (err) {
-      toast(`拷贝至剪切板出错：${err}`, { id: 'copyError' })
+      toast.error(`拷贝至剪切板出错：${describeError(err)}`, { id: 'copy-clipboard' })
     }
   }
-
-  useEffect(() => {
-    async function loadConfig() {
-      const ret = await loadData('COOKIE_SYNC_SETTING')
-      if (ret) setData({ ...data, ...ret })
-    }
-    loadConfig()
-  }, [])
 
   return (
     <div className='w-lg overflow-x-hidden bg-white dark:bg-neutral-800' style={{ width: '360px' }}>
       <div className='p-3 space-y-2 text-line text-neutral-800 dark:text-neutral-200'>
-        {data['uuid'] && data['uuid'] === init['uuid'] && (
-          <Alert tint='warning'>
-            {browser.i18n.getMessage('notInitialized')}
-          </Alert>
+        {!isPersisted && status !== 'loading' && (
+          <Alert tint='warning'>{browser.i18n.getMessage('notInitialized')}</Alert>
         )}
 
         <RadioGroup
           name='working-method'
-          value={data['type']}
-          onValueChange={(value) => setData({ ...data, type: value as ConfigProps['type'] })}
+          value={config.type}
+          onValueChange={value => setConfig({ ...config, type: value as ConfigProps['type'] })}
           className='flex gap-2'
         >
           <div className='flex items-center gap-1.5'>
@@ -135,7 +78,7 @@ function App() {
           </div>
         </RadioGroup>
 
-        {data['type'] && data['type'] !== 'pause' && (
+        {config.type !== 'pause' && (
           <>
             <div className='flex flex-row items-center gap-1'>
               <div className='flex-1'>
@@ -143,22 +86,16 @@ function App() {
                   type='text'
                   className='font-mono'
                   placeholder='端对端用户密钥'
-                  value={`${data['uuid']}@${data['password']}`}
+                  value={`${config.uuid}@${config.password}`}
                   readOnly
                 />
               </div>
               <div className='flex items-center gap-1'>
-                <Button onClick={() => copyToClipboard(`${data['uuid']}@${data['password']}`)}>
+                <Button onClick={() => copyToClipboard(`${config.uuid}@${config.password}`)}>
                   {browser.i18n.getMessage('copyToken')}
                 </Button>
 
-                <Button
-                  tint='accent'
-                  onClick={() => {
-                    save(true)
-                  }}
-                  disabled={isLoading}
-                >
+                <Button tint='accent' onClick={() => handleSave({ andSync: true })} disabled={isBusy}>
                   {browser.i18n.getMessage('saveAndSync')}
                 </Button>
               </div>
@@ -166,11 +103,9 @@ function App() {
 
             <Accordion type='single' collapsible>
               <AccordionItem value='advanced-settings'>
-                <AccordionTrigger>
-                  {browser.i18n.getMessage('advancedSettings')}
-                </AccordionTrigger>
+                <AccordionTrigger>{browser.i18n.getMessage('advancedSettings')}</AccordionTrigger>
                 <AccordionContent className='space-y-2'>
-                  <Button tint='red' size='sm' onClick={() => setData(init)} disabled={isLoading}>
+                  <Button tint='red' size='sm' onClick={handleReset} disabled={isBusy}>
                     {browser.i18n.getMessage('reset')}
                   </Button>
 
@@ -181,21 +116,13 @@ function App() {
           </>
         )}
 
-        {data['type'] && data['type'] === 'pause' && (
+        {config.type === 'pause' && (
           <div className='space-y-2'>
-            <Alert tint='warning'>
-              {browser.i18n.getMessage('loginSyncPaused')}
-            </Alert>
+            <Alert tint='warning'>{browser.i18n.getMessage('loginSyncPaused')}</Alert>
             <div className='flex items-center justify-between'>
               <div />
               <div>
-                <Button
-                  tint='accent'
-                  onClick={() => {
-                    save(false)
-                  }}
-                  disabled={isLoading}
-                >
+                <Button tint='accent' onClick={() => handleSave({ andSync: false })} disabled={isBusy}>
                   {browser.i18n.getMessage('save')}
                 </Button>
               </div>
