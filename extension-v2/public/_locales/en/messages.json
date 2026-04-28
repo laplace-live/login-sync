@@ -1,0 +1,45 @@
+{
+  "appTitle": {
+    "message": "LAPLACE Login Sync"
+  },
+  "appDesc": {
+    "message": "LAPLACE Login Sync is an extension to sync your login sessions",
+    "description": "Based on CookieCloud with end-to-end encryption technology to keep your login data safe and secure."
+  },
+  "syncLoginSessions": {
+    "message": "Sync Login Sessions"
+  },
+  "pauseSyncing": {
+    "message": "Pause Syncing"
+  },
+  "copyToken": {
+    "message": "Copy"
+  },
+  "reset": {
+    "message": "Reset Sync Token"
+  },
+  "resetLabel": {
+    "message": "Reset"
+  },
+  "resetDesc": {
+    "message": "Click the above button to choose a new sync token you prefer. Click Save and Sync to take effect."
+  },
+  "notInitialized": {
+    "message": "Extension not initialized, please click Save and Sync"
+  },
+  "loginSyncPaused": {
+    "message": "Login sync is paused"
+  },
+  "saveAndSync": {
+    "message": "Save and Sync"
+  },
+  "save": {
+    "message": "Save"
+  },
+  "advancedSettings": {
+    "message": "Advanced Settings"
+  },
+  "aboutLabel": {
+    "message": "About"
+  }
+}

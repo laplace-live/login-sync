@@ -1,0 +1,58 @@
+name: Extension v2
+
+on:
+  push:
+    branches:
+      - "master"
+    tags:
+      - "v*"
+    paths:
+      - "extension-v2/**"
+      - ".github/workflows/extension-v2.yml"
+  pull_request:
+    branches:
+      - "master"
+    paths:
+      - "extension-v2/**"
+      - ".github/workflows/extension-v2.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    # Skip this job if this is a tag event but no extension-v2 files were changed
+    if: ${{ !startsWith(github.ref, 'refs/tags/') || contains(github.event.head_commit.message, 'extension-v2') }}
+
+    defaults:
+      run:
+        working-directory: ./extension-v2
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build + zip (Chrome MV3)
+        run: bun run zip
+
+      - name: Build + zip (Firefox MV2)
+        run: bun run zip:firefox
+
+      - name: Store the packaged zips
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-v2-builds
+          path: extension-v2/.output/*.zip
+
+  # TODO: Once we are ready to publish from this workflow, mirror the
+  # `store-publish` (PlasmoHQ/bpp) and `github-release` jobs from
+  # .github/workflows/extension.yml. For now the legacy Plasmo workflow
+  # remains the source of store releases.

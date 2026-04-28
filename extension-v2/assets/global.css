@@ -1,0 +1,13 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@import './kladewind.css';
+@import './schemes.css';
+
+@layer base {
+  body {
+    color: var(--color-fg);
+    background-color: var(--color-bg);
+  }
+}

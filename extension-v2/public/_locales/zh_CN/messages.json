@@ -1,0 +1,45 @@
+{
+  "appTitle": {
+    "message": "LAPLACE Login Sync"
+  },
+  "appDesc": {
+    "message": "LAPLACE Login Sync 是一款用于同步登录状态的工具",
+    "description": "基于 CookieCloud 二次开发，采用端对端加密，保证您的登录信息安全。"
+  },
+  "syncLoginSessions": {
+    "message": "同步登录状态"
+  },
+  "pauseSyncing": {
+    "message": "暂停同步"
+  },
+  "copyToken": {
+    "message": "拷贝"
+  },
+  "reset": {
+    "message": "重置登录密钥"
+  },
+  "resetLabel": {
+    "message": "重置"
+  },
+  "resetDesc": {
+    "message": "点击上方按钮选择一个您喜欢的登录密钥；点击「保存并同步」生效。"
+  },
+  "notInitialized": {
+    "message": "尚未初始化同步，请点击「保存并同步」"
+  },
+  "loginSyncPaused": {
+    "message": "登录状态同步已暂停"
+  },
+  "saveAndSync": {
+    "message": "保存并同步"
+  },
+  "save": {
+    "message": "保存设置"
+  },
+  "advancedSettings": {
+    "message": "高级设置"
+  },
+  "aboutLabel": {
+    "message": "关于"
+  }
+}
