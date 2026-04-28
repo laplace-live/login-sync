@@ -10,5 +10,4 @@ export type SyncResponse = {
   note: string | null
 }
 
-export const sendSync = (req: SyncRequest) =>
-  browser.runtime.sendMessage(req) as Promise<SyncResponse>
+export const sendSync = (req: SyncRequest) => browser.runtime.sendMessage(req) as Promise<SyncResponse>

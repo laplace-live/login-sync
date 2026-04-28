@@ -11,7 +11,7 @@ export default defineContentScript({
 
       // NOTE: as a fork of the original code, we don't use the domains field. so get domains fron const
       const domainConfigs = STATIC_DOMAINS
-      const domains = domainConfigs.map((c) => c.domain)
+      const domains = domainConfigs.map(c => c.domain)
 
       if (domains) {
         // 检查 domain 是否部分匹配 domains的每一个域名
@@ -23,26 +23,24 @@ export default defineContentScript({
       }
 
       if (config?.type && config.type === 'down') {
-        const stored = await loadData('LS-' + host)
+        const stored = await loadData(`LS-${host}`)
         if (stored) {
           for (const key in stored) {
             localStorage.setItem(key, stored[key])
           }
           // 清空浏览器的storage，避免多次覆盖
-          await removeData('LS-' + host)
+          await removeData(`LS-${host}`)
         }
       } else {
         const all = localStorage
         const keys = Object.keys(all)
         const values = Object.values(all)
-        const result: {
-          [key: string]: any
-        } = {}
+        const result: Record<string, string> = {}
         for (let i = 0; i < keys.length; i++) {
           result[keys[i]] = values[i]
         }
         if (Object.keys(result).length > 0) {
-          await saveData('LS-' + host, result)
+          await saveData(`LS-${host}`, result)
           console.debug('[laplace] localStorage mirrored', {
             host,
             keys: Object.keys(result).length,

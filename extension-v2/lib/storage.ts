@@ -14,9 +14,9 @@ export async function browserRemove(key: string) {
   return await browser.storage.local.remove(key)
 }
 
-export async function browserLoadAll(prefix: string | null = null): Promise<Record<string, any>> {
+export async function browserLoadAll(prefix: string | null = null): Promise<Record<string, unknown>> {
   const result = await browser.storage.local.get(null)
-  let ret: Record<string, any> = result
+  let ret: Record<string, unknown> = result
   if (prefix) {
     ret = {}
     for (const key in result) {
@@ -36,7 +36,7 @@ export async function loadData(key: string) {
   const data = browser?.storage ? await browserGet(key) : window.localStorage.getItem(key)
   try {
     return typeof data === 'string' ? JSON.parse(data) : data
-  } catch (error) {
+  } catch {
     return data || []
   }
 }

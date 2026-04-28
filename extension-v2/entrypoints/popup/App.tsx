@@ -109,7 +109,7 @@ function App() {
 
   return (
     <div className='w-lg overflow-x-hidden bg-white dark:bg-neutral-800' style={{ width: '360px' }}>
-      <div className='p-3 space-y-2 text-line text-neutral-800 dark:text-neutral-200'>
+      <div className='space-y-2 p-3 text-line text-neutral-800 dark:text-neutral-200'>
         {loadError && (
           <Alert tint='danger'>
             <div className='space-y-2'>
@@ -224,18 +224,23 @@ function App() {
           </div>
         )}
 
-        <Separator extended className='-mx-3 mb-2 mt-1.5'>
+        <Separator extended className='-mx-3 mt-1.5 mb-2'>
           {browser.i18n.getMessage('aboutLabel')}
         </Separator>
 
         <div className='text-fg/60'>
           <p>
             Brought to you by{' '}
-            <a href='https://laplace.live' target='_blank' className='font-semibold text-ac'>
+            <a href='https://laplace.live' target='_blank' className='font-semibold text-ac' rel='noopener'>
               LAPLACE
             </a>
             , source code on{' '}
-            <a href='https://github.com/laplace-live/login-sync' target='_blank' className='font-semibold text-ac'>
+            <a
+              href='https://github.com/laplace-live/login-sync'
+              target='_blank'
+              className='font-semibold text-ac'
+              rel='noopener'
+            >
               GitHub
             </a>
           </p>

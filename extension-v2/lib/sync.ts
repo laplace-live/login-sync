@@ -1,9 +1,10 @@
 import CryptoJS from 'crypto-js'
 import { gzip } from 'pako'
 
+import type { ConfigProps, DomainConfig } from './types'
+
 import { DEFAULT_SYNC_SERVER, STATIC_DOMAINS } from './const'
 import { browserLoadAll, loadData, saveData } from './storage'
-import type { ConfigProps, DomainConfig } from './types'
 
 type Cookie = Browser.cookies.Cookie
 
@@ -16,10 +17,9 @@ export async function uploadCookie(payload: ConfigProps) {
   }
 
   // NOTE: as a fork of the original code, we don't use the domains field. so get domains fron const
-  const domains = STATIC_DOMAINS.map((config) => config.domain)
+  const domains = STATIC_DOMAINS.map(config => config.domain)
 
-  const blacklist =
-    payload['blacklist']?.trim().length > 0 ? payload['blacklist']?.trim().split('\n') : []
+  const blacklist = payload.blacklist?.trim().length > 0 ? payload.blacklist?.trim().split('\n') : []
 
   const cookies = await getCookieByDomains(domains, blacklist)
 
@@ -34,9 +34,9 @@ export async function uploadCookie(payload: ConfigProps) {
   }
   // 添加鉴权的 header
   try {
-    if (payload['headers']?.trim().length > 0) {
-      const extraHeaderPairs = payload['headers']?.trim().split('\n')
-      extraHeaderPairs.forEach((extraHeaderPair) => {
+    if (payload.headers?.trim().length > 0) {
+      const extraHeaderPairs = payload.headers?.trim().split('\n')
+      extraHeaderPairs.forEach(extraHeaderPair => {
         const extraHeaderPairKV = String(extraHeaderPair).split(':')
         if (extraHeaderPairKV?.length > 1) {
           headers[extraHeaderPairKV[0]] = extraHeaderPairKV[1]
@@ -52,9 +52,7 @@ export async function uploadCookie(payload: ConfigProps) {
     return false
   }
   // 用aes对cookie进行加密
-  const aesKey = CryptoJS.MD5(payload['uuid'] + '-' + payload['password'])
-    .toString()
-    .substring(0, 16)
+  const aesKey = CryptoJS.MD5(`${payload.uuid}-${payload.password}`).toString().substring(0, 16)
   // NOTE: server contract — these snake_case keys are decrypted and parsed by the sync server
   const dataToEncrypt = JSON.stringify({
     cookie_data: cookies,
@@ -65,30 +63,25 @@ export async function uploadCookie(payload: ConfigProps) {
     cookieDomains: Object.keys(cookies),
     cookieCount: Object.values(cookies).reduce((acc, curr) => acc + curr.length, 0),
     localStorageDomains: Object.keys(localStorages),
-    localStorageKeyCount: Object.values(localStorages).reduce(
-      (acc, curr) => acc + Object.keys(curr).length,
-      0,
-    ),
+    localStorageKeyCount: Object.values(localStorages).reduce((acc, curr) => acc + Object.keys(curr).length, 0),
     sizeKb: Math.round(dataToEncrypt.length / 1024),
   })
 
   const encrypted = CryptoJS.AES.encrypt(dataToEncrypt, aesKey).toString()
   // Fixed endpoint, always use our builtin server
-  const endpoint = DEFAULT_SYNC_SERVER + '/update'
+  const endpoint = `${DEFAULT_SYNC_SERVER}/update`
 
-  const sha256 = CryptoJS.SHA256(
-    uuid + '-' + password + '-' + endpoint + '-' + dataToEncrypt,
-  ).toString()
+  const sha256 = CryptoJS.SHA256(`${uuid}-${password}-${endpoint}-${dataToEncrypt}`).toString()
   const lastUploadedInfo = await loadData('LAST_UPLOADED_COOKIE')
   console.debug('[laplace] payload hash', { sha256, lastTs: lastUploadedInfo?.timestamp })
 
   // 如果 20 分钟内已经上传过同样内容的数据，则不再上传
   if (
-    !payload['forceUpdate'] &&
+    !payload.forceUpdate &&
     lastUploadedInfo &&
     lastUploadedInfo.sha256 === sha256 &&
     // In some rare case (ie when extension loaded in development mode), the .timestamp can be undefined
-    new Date().getTime() - (lastUploadedInfo?.timestamp || new Date().getTime()) < 1000 * 60 * 20
+    Date.now() - (lastUploadedInfo?.timestamp || Date.now()) < 1000 * 60 * 20
   ) {
     console.log('[laplace] skip: identical payload within 20 min')
     return {
@@ -98,7 +91,7 @@ export async function uploadCookie(payload: ConfigProps) {
   }
 
   const requestBody = {
-    uuid: payload['uuid'],
+    uuid: payload.uuid,
     encrypted: encrypted,
   }
   try {
@@ -112,7 +105,7 @@ export async function uploadCookie(payload: ConfigProps) {
 
     if (result && result.action === 'done')
       await saveData('LAST_UPLOADED_COOKIE', {
-        timestamp: new Date().getTime(),
+        timestamp: Date.now(),
         sha256: sha256,
       })
 
@@ -125,7 +118,7 @@ export async function uploadCookie(payload: ConfigProps) {
 }
 
 export async function getLocalStorageByDomains(domainConfigs: DomainConfig[] = []) {
-  const retStorage: { [key: string]: Record<string, any> } = {}
+  const retStorage: { [key: string]: Record<string, unknown> } = {}
   const localStorages = await browserLoadAll('LS-')
 
   if (Array.isArray(domainConfigs) && domainConfigs.length > 0) {
@@ -135,35 +128,38 @@ export async function getLocalStorageByDomains(domainConfigs: DomainConfig[] = [
       const domain = config.domain
       for (const key in localStorages) {
         if (key.indexOf(domain) >= 0) {
+          const storageData = localStorages[key]
+          if (!isRecord(storageData)) continue
+
           // For laplace.live domain, only include items where localStorage key starts with 'loginSyncOption'
           if (domain === 'laplace.live') {
-            const storageData = localStorages[key]
-
-            if (storageData && typeof storageData === 'object') {
-              const filteredData: Record<string, any> = {}
-              for (const storageKey in storageData) {
-                if (storageKey.startsWith('loginSyncOption')) {
-                  filteredData[storageKey] = storageData[storageKey]
-                }
+            const filteredData: Record<string, unknown> = {}
+            for (const storageKey in storageData) {
+              if (storageKey.startsWith('loginSyncOption')) {
+                filteredData[storageKey] = storageData[storageKey]
               }
+            }
 
-              if (Object.keys(filteredData).length > 0) {
-                console.debug('[laplace] localStorage matched (whitelisted)', {
-                  domain,
-                  count: Object.keys(filteredData).length,
-                })
-                retStorage[key] = filteredData
-              }
+            if (Object.keys(filteredData).length > 0) {
+              console.debug('[laplace] localStorage matched (whitelisted)', {
+                domain,
+                count: Object.keys(filteredData).length,
+              })
+              retStorage[key] = filteredData
             }
           } else {
             console.debug('[laplace] localStorage matched', { domain, key })
-            retStorage[key] = localStorages[key]
+            retStorage[key] = storageData
           }
         }
       }
     }
   }
   return retStorage
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
 }
 
 async function getCookieByDomains(domains: string[] = [], blacklist: string[] = []) {
@@ -213,7 +209,7 @@ async function getCookieByDomains(domains: string[] = [], blacklist: string[] = 
 }
 
 export function sleep(ms: number) {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     setTimeout(resolve, ms)
   })
 }
