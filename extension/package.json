@@ -41,7 +41,7 @@
     "@types/react-dom": "^19.1.2",
     "@types/webextension-polyfill": "^0.12.3",
     "autoprefixer": "^10.4.21",
-    "postcss": "^8.5.3",
+    "postcss": "^8.5.10",
     "postcss-nesting": "^13.0.1",
     "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.11",
