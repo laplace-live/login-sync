@@ -38,7 +38,12 @@ function relativeTime(ts: number): string {
 function App() {
   const { config, setConfig, save, sync, reset, restorePrevious, status, isConfigured, previousConfig, loadError } =
     useSyncConfig()
-  const isBusy = status !== 'idle'
+  // Gates every destructive action. When `loadError` is set, `config` holds
+  // freshly-generated defaults rather than the user's real stored credentials —
+  // any Save/Reset would silently clobber the still-intact storage with those
+  // throwaway defaults. The danger alert below is defense-in-depth; this gate
+  // is the actual safety.
+  const isBusy = status !== 'idle' || loadError !== null
 
   async function handleSave({ andSync }: { andSync: boolean }) {
     try {
@@ -107,7 +112,14 @@ function App() {
       <div className='p-3 space-y-2 text-line text-neutral-800 dark:text-neutral-200'>
         {loadError && (
           <Alert tint='danger'>
-            {browser.i18n.getMessage('loadConfigFailed')} {describeError(loadError)}
+            <div className='space-y-2'>
+              <p>
+                {browser.i18n.getMessage('loadConfigFailed')} {describeError(loadError)}
+              </p>
+              <Button tint='rose' variant='solid' size='sm' onClick={() => window.location.reload()}>
+                {browser.i18n.getMessage('reloadPopup')}
+              </Button>
+            </div>
           </Alert>
         )}
 

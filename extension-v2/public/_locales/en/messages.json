@@ -49,7 +49,10 @@
     "message": "Extension not initialized, please click Save and Sync"
   },
   "loadConfigFailed": {
-    "message": "Failed to load saved settings. Please reopen the popup before saving — the form below is showing defaults, not your actual stored configuration."
+    "message": "Failed to load saved settings. Saving is disabled to protect your stored credentials — the form below is showing defaults, not your actual configuration."
+  },
+  "reloadPopup": {
+    "message": "Reload"
   },
   "loginSyncPaused": {
     "message": "Login sync is paused"
