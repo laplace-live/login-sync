@@ -1,4 +1,4 @@
-import { STATIC_DOMAINS, STORAGE_KEY_CONFIG } from '@/lib/const'
+import { STATIC_DOMAINS, STORAGE_KEY_CONFIG, STORAGE_KEY_LS_PREFIX } from '@/lib/const'
 import { loadData, removeData, saveData } from '@/lib/storage'
 
 export default defineContentScript({
@@ -22,14 +22,16 @@ export default defineContentScript({
         if (domains.length > 0 && !matched) return false
       }
 
+      const lsKey = `${STORAGE_KEY_LS_PREFIX}${host}`
+
       if (config?.type && config.type === 'down') {
-        const stored = await loadData(`LS-${host}`)
+        const stored = await loadData(lsKey)
         if (stored) {
           for (const key in stored) {
             localStorage.setItem(key, stored[key])
           }
           // 清空浏览器的storage，避免多次覆盖
-          await removeData(`LS-${host}`)
+          await removeData(lsKey)
         }
       } else {
         const all = localStorage
@@ -40,7 +42,7 @@ export default defineContentScript({
           result[keys[i]] = values[i]
         }
         if (Object.keys(result).length > 0) {
-          await saveData(`LS-${host}`, result)
+          await saveData(lsKey, result)
           console.debug('[laplace] localStorage mirrored', {
             host,
             keys: Object.keys(result).length,

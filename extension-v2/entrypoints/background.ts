@@ -39,7 +39,7 @@ export default defineBackground(() => {
       if (config.interval < 1 || minuteCount % config.interval === 0) {
         console.log('[laplace] sync tick', { minute: minuteCount, every: config.interval })
         const result = await uploadCookie(config)
-        if (result && result.action === 'done') console.log('[laplace] upload ok')
+        if (result.action === 'done') console.log('[laplace] upload ok')
         else console.warn('[laplace] upload not done', result)
       } else {
         console.debug('[laplace] sync skip (off-cycle)', {
@@ -102,14 +102,10 @@ export default defineBackground(() => {
       if (!payload?.type) return false
 
       uploadCookie(payload).then(result => {
-        if (result && typeof result === 'object') {
-          sendResponse({
-            message: result.action ?? 'fail',
-            note: result.note ?? null,
-          })
-        } else {
-          sendResponse({ message: 'fail', note: null })
-        }
+        sendResponse({
+          message: result.action,
+          note: result.note ?? null,
+        })
       })
 
       return true
