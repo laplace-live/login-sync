@@ -48,6 +48,9 @@
   "notInitialized": {
     "message": "Extension not initialized, please click Save and Sync"
   },
+  "loadConfigFailed": {
+    "message": "Failed to load saved settings. Please reopen the popup before saving — the form below is showing defaults, not your actual stored configuration."
+  },
   "loginSyncPaused": {
     "message": "Login sync is paused"
   },

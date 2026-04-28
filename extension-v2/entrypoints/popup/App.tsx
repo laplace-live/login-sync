@@ -36,7 +36,8 @@ function relativeTime(ts: number): string {
 }
 
 function App() {
-  const { config, setConfig, save, sync, reset, restorePrevious, status, isPersisted, previousConfig } = useSyncConfig()
+  const { config, setConfig, save, sync, reset, restorePrevious, status, isConfigured, previousConfig, loadError } =
+    useSyncConfig()
   const isBusy = status !== 'idle'
 
   async function handleSave({ andSync }: { andSync: boolean }) {
@@ -56,16 +57,25 @@ function App() {
 
   async function handleReset() {
     try {
-      await reset()
+      const undo = await reset()
       toast.success('已重置为新的登录密钥', {
         id: 'save-sync',
         duration: 8000,
-        action: {
-          label: browser.i18n.getMessage('resetUndo'),
-          onClick: () => {
-            void handleRestore()
-          },
-        },
+        action: undo
+          ? {
+              label: browser.i18n.getMessage('resetUndo'),
+              onClick: () => {
+                undo()
+                  .then(() => {
+                    toast.success('已恢复上次登录密钥', { id: 'save-sync' })
+                  })
+                  .catch(err => {
+                    console.error('[laplace] restore failed', err)
+                    toast.error(describeError(err), { id: 'save-sync' })
+                  })
+              },
+            }
+          : undefined,
       })
     } catch (err) {
       console.error('[laplace] reset failed', err)
@@ -95,7 +105,13 @@ function App() {
   return (
     <div className='w-lg overflow-x-hidden bg-white dark:bg-neutral-800' style={{ width: '360px' }}>
       <div className='p-3 space-y-2 text-line text-neutral-800 dark:text-neutral-200'>
-        {!isPersisted && status !== 'loading' && (
+        {loadError && (
+          <Alert tint='danger'>
+            {browser.i18n.getMessage('loadConfigFailed')} {describeError(loadError)}
+          </Alert>
+        )}
+
+        {!loadError && !isConfigured && status !== 'loading' && (
           <Alert tint='warning'>{browser.i18n.getMessage('notInitialized')}</Alert>
         )}
 
