@@ -1,0 +1,96 @@
+{
+  // Multi-root workspace for the LAPLACE Login Sync poly-repo.
+  // Open this file with: File > Open Workspace from File...
+  // Each subproject becomes its own workspace folder so tools like the Biome
+  // VS Code extension can locate the local biome.jsonc and node_modules binary
+  // per project (root has no biome config).
+  "folders": [
+    {
+      "name": "extension-v2",
+      "path": "extension-v2"
+    },
+    {
+      "name": "server",
+      "path": "server"
+    },
+    {
+      "name": "extension (legacy)",
+      "path": "extension"
+    },
+    {
+      "name": "server-express (legacy)",
+      "path": "server-express"
+    },
+    {
+      "name": "client-python",
+      "path": "client-python"
+    },
+    {
+      "name": "benchmarks",
+      "path": "benchmarks"
+    },
+    {
+      "name": "examples",
+      "path": "examples"
+    },
+    {
+      "name": "root",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "editor.formatOnSave": true,
+    // https://biomejs.dev/reference/vscode/
+    "editor.codeActionsOnSave": {
+      "source.fixAll.biome": "explicit",
+      "source.organizeImports.biome": "explicit"
+    },
+    "[typescript]": {
+      "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[typescriptreact]": {
+      "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[javascript]": {
+      "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[javascriptreact]": {
+      "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[json]": {
+      "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[jsonc]": {
+      "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[css]": {
+      "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[tailwindcss]": {
+      "editor.defaultFormatter": "biomejs.biome"
+    },
+    "tailwindCSS.classFunctions": [
+      // https://cva.style/docs/getting-started/installation
+      "cva",
+      "cx",
+      // https://www.tailwind-variants.org/docs/getting-started#intellisense-setup-optional
+      "tv"
+    ],
+    "search.exclude": {
+      "**/public/r/*": true,
+      "**/.output/**": true,
+      "**/.wxt/**": true,
+      "**/build/**": true,
+      "**/dist/**": true
+    },
+    "files.exclude": {
+      "**/.DS_Store": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "biomejs.biome",
+      "bradlc.vscode-tailwindcss"
+    ]
+  }
+}
