@@ -1,5 +1,5 @@
-import { defineConfig } from 'wxt'
 import tailwindcss from '@tailwindcss/vite'
+import { defineConfig } from 'wxt'
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
@@ -11,12 +11,7 @@ export default defineConfig({
     name: '__MSG_appTitle__',
     description: '__MSG_appDesc__',
     default_locale: 'en',
-    host_permissions: [
-      '*://*.bilibili.com/',
-      'https://bilibili.com/',
-      '*://*.laplace.live/',
-      'https://laplace.live/',
-    ],
+    host_permissions: ['*://*.bilibili.com/', 'https://bilibili.com/', '*://*.laplace.live/', 'https://laplace.live/'],
     permissions: ['cookies', 'tabs', 'storage', 'alarms', 'unlimitedStorage'],
   },
 })
