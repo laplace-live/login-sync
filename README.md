@@ -29,17 +29,3 @@ cd server
 bun install
 bun run dev
 ```
-
-## Releasing the extension
-
-When you make a user-visible change to the extension, add a changeset in the same PR:
-
-```bash
-bun changeset
-```
-
-When the PR lands on `master`, the `Release` workflow opens a "Version Packages" PR that bumps `extension-v2/package.json` and updates its `CHANGELOG.md`. Merging that PR creates the tag `laplace-login-sync@<version>`, which triggers `extension-v2.yml` to:
-
-1. Build Chrome / Firefox / Edge zips
-2. Submit them to the stores via `wxt submit`
-3. Attach them to the corresponding GitHub Release (whose body is the new changelog entry)

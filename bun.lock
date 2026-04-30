@@ -5,10 +5,10 @@
     "": {
       "name": "laplace-login-sync",
       "devDependencies": {
-        "@changesets/cli": "^2.30.0",
+        "@changesets/cli": "^2.31.0",
       },
     },
-    "extension-v2": {
+    "extension": {
       "name": "laplace-login-sync",
       "version": "2.0.0",
       "dependencies": {
@@ -1082,7 +1082,7 @@
 
     "ky": ["ky@1.14.3", "", {}, "sha512-9zy9lkjac+TR1c2tG+mkNSVlyOpInnWdSMiue4F+kq8TwJSgv6o8jhLRg8Ho6SnZ9wOYUq/yozts9qQCfk7bIw=="],
 
-    "laplace-login-sync": ["laplace-login-sync@workspace:extension-v2"],
+    "laplace-login-sync": ["laplace-login-sync@workspace:extension"],
 
     "latest-version": ["latest-version@9.0.0", "", { "dependencies": { "package-json": "^10.0.0" } }, "sha512-7W0vV3rqv5tokqkBAFV1LbR7HPOWzXQDpDgEuib/aJ1jsZZx6x3c2mBI+TJhJzOhkGeaLbCKEHXEXLfirtG2JA=="],
 

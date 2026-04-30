@@ -6,8 +6,8 @@
   // per project (root has no biome config).
   "folders": [
     {
-      "name": "extension-v2",
-      "path": "extension-v2"
+      "name": "extension",
+      "path": "extension"
     },
     {
       "name": "server",
@@ -15,7 +15,7 @@
     },
     {
       "name": "extension (legacy)",
-      "path": "extension"
+      "path": "extension-v1"
     },
     {
       "name": "server-express (legacy)",

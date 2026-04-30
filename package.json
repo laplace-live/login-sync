@@ -4,7 +4,7 @@
   "type": "module",
   "private": true,
   "workspaces": [
-    "extension-v2"
+    "extension"
   ],
   "scripts": {
     "tag": "changeset tag",

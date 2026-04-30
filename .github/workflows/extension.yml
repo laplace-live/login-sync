@@ -1,4 +1,4 @@
-name: Extension v2
+name: Extension
 
 on:
   push:
@@ -7,14 +7,14 @@ on:
     tags:
       - "v*"
     paths:
-      - "extension-v2/**"
-      - ".github/workflows/extension-v2.yml"
+      - "extension/**"
+      - ".github/workflows/extension.yml"
   pull_request:
     branches:
       - "master"
     paths:
-      - "extension-v2/**"
-      - ".github/workflows/extension-v2.yml"
+      - "extension/**"
+      - ".github/workflows/extension.yml"
   workflow_dispatch:
 
 jobs:
@@ -23,7 +23,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./extension-v2
+        working-directory: ./extension
 
     steps:
       - name: Checkout
@@ -46,8 +46,8 @@ jobs:
       - name: Store the packaged zips
         uses: actions/upload-artifact@v7
         with:
-          name: extension-v2-builds
-          path: extension-v2/.output/*.zip
+          name: extension-builds
+          path: extension/.output/*.zip
 
   store-publish:
     name: Publish to store
@@ -62,7 +62,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./extension-v2
+        working-directory: ./extension
 
     steps:
       - name: Checkout
@@ -79,8 +79,8 @@ jobs:
       - name: Download the packaged zips
         uses: actions/download-artifact@v4
         with:
-          name: extension-v2-builds
-          path: extension-v2/.output/
+          name: extension-builds
+          path: extension/.output/
 
       # See https://wxt.dev/guide/essentials/publishing.html
       # Run `bun x wxt submit init` locally to generate the secrets below.
@@ -129,8 +129,8 @@ jobs:
       - name: Download the packaged zips
         uses: actions/download-artifact@v4
         with:
-          name: extension-v2-builds
-          path: extension-v2/.output/
+          name: extension-builds
+          path: extension/.output/
 
       # Create the release if it doesn't already exist. The legacy
       # extension.yml workflow may have created it on the same tag, in which
@@ -149,5 +149,5 @@ jobs:
         # `--clobber` so re-runs (or coexistence with the legacy workflow)
         # don't fail when filenames overlap.
         run: >-
-          gh release upload '${{ github.ref_name }}' extension-v2/.output/*.zip
+          gh release upload '${{ github.ref_name }}' extension/.output/*.zip
           --clobber --repo '${{ github.repository }}'
