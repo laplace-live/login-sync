@@ -5,7 +5,9 @@ on:
     branches:
       - "master"
     tags:
-      - "v*"
+      # Tag format created by Changesets in workspace mode:
+      # `<workspace-package-name>@<version>` (e.g. `laplace-login-sync@2.0.3`).
+      - "laplace-login-sync@*"
     paths:
       - "extension/**"
       - ".github/workflows/extension.yml"
@@ -53,9 +55,9 @@ jobs:
     name: Publish to store
     runs-on: ubuntu-latest
 
-    # Publish only on `v*` tag pushes (created by changesets when the
-    # "Version Packages" PR merges).
-    if: startsWith(github.ref, 'refs/tags/v')
+    # Publish only on `laplace-login-sync@*` tag pushes (created by changesets
+    # when the "Version Packages" PR merges).
+    if: startsWith(github.ref, 'refs/tags/laplace-login-sync@')
 
     needs:
       - build
@@ -112,8 +114,8 @@ jobs:
     runs-on: ubuntu-latest
 
     # Same gate as the publish job: only attach extension zips to
-    # `v*` tag releases.
-    if: startsWith(github.ref, 'refs/tags/v')
+    # `laplace-login-sync@*` tag releases.
+    if: startsWith(github.ref, 'refs/tags/laplace-login-sync@')
 
     needs:
       - build
