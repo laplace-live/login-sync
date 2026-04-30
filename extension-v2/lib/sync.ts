@@ -17,9 +17,26 @@ type Cookie = Browser.cookies.Cookie
 /** Normalised result returned to background/UI callers. */
 export type SyncResult = { action: string; note?: string }
 
+/**
+ * Per-entry value fingerprint, grouped by container (cookie domain / LS storage
+ * key). Values are short hashes — enough to detect a real change without
+ * persisting the raw cookie values to extension storage.
+ */
+type Fingerprint = Record<string, Record<string, string>>
+
+interface FingerprintDiff {
+  changed: string[]
+  added: string[]
+  removed: string[]
+}
+
 interface LastUploadInfo {
   timestamp?: number
   sha256?: string
+  /** Per-cookie fingerprint from the most recent successful upload. */
+  cookieFp?: Fingerprint
+  /** Per-localStorage-entry fingerprint from the most recent successful upload. */
+  localStorageFp?: Fingerprint
 }
 
 const LAPLACE_DOMAIN = 'laplace.live'
@@ -73,6 +90,14 @@ export async function uploadCookie(payload: ConfigProps): Promise<SyncResult> {
     return { action: 'done', note: '本地 Cookie 数据无变动，不再上传' }
   }
 
+  // Hash mismatch ⇒ we're going to upload. Surface *which* keys actually
+  // changed so the user can identify noisy/rotating cookies (analytics,
+  // marketing, etc.) and add them to the blacklist instead of letting them
+  // trigger an upload every cycle.
+  const cookieFp = fingerprintCookies(cookies)
+  const localStorageFp = fingerprintLocalStorage(localStorages)
+  logPayloadDiff(lastUploaded, cookieFp, localStorageFp)
+
   const aesKey = CryptoJS.MD5(`${payload.uuid}-${payload.password}`).toString().substring(0, 16)
   const encrypted = CryptoJS.AES.encrypt(dataToEncrypt, aesKey).toString()
 
@@ -90,7 +115,12 @@ export async function uploadCookie(payload: ConfigProps): Promise<SyncResult> {
 
     const result = (await response.json()) as SyncResult | undefined
     if (result?.action === 'done') {
-      await saveData(STORAGE_KEY_LAST_UPLOAD, { timestamp: Date.now(), sha256 })
+      await saveData(STORAGE_KEY_LAST_UPLOAD, {
+        timestamp: Date.now(),
+        sha256,
+        cookieFp,
+        localStorageFp,
+      } satisfies LastUploadInfo)
     }
     return result ?? { action: 'fail' }
   } catch (error) {
@@ -106,6 +136,120 @@ function isFreshDuplicate(last: LastUploadInfo | null | undefined, sha256: strin
   // to preserve the original skip-on-dupe behaviour.
   const ts = last.timestamp ?? Date.now()
   return Date.now() - ts < SYNC_DEDUPE_WINDOW_MS
+}
+
+/**
+ * Short value-hash used to spot per-key changes without persisting raw cookie
+ * values. 12 hex chars (~48 bits) is plenty for change-detection collisions.
+ */
+function shortHash(value: string): string {
+  return CryptoJS.SHA256(value).toString().slice(0, 12)
+}
+
+/** Disambiguate cookies that share a name across paths (rare but legal). */
+function cookieEntryKey(c: Cookie): string {
+  const path = c.path && c.path !== '/' ? ` path=${c.path}` : ''
+  return `${c.name}${path}`
+}
+
+function fingerprintCookies(cookies: Record<string, Cookie[]>): Fingerprint {
+  const fp: Fingerprint = {}
+  for (const list of Object.values(cookies)) {
+    for (const c of list) {
+      const group = c.domain || '(no-domain)'
+      if (!fp[group]) fp[group] = {}
+      fp[group][cookieEntryKey(c)] = shortHash(c.value ?? '')
+    }
+  }
+  return fp
+}
+
+function fingerprintLocalStorage(ls: Record<string, Record<string, unknown>>): Fingerprint {
+  const fp: Fingerprint = {}
+  for (const [storageKey, entries] of Object.entries(ls)) {
+    fp[storageKey] = {}
+    for (const [k, v] of Object.entries(entries)) {
+      // JSON.stringify is stable enough for change-detection on the structured
+      // values content scripts mirror into extension storage.
+      fp[storageKey][k] = shortHash(typeof v === 'string' ? v : JSON.stringify(v))
+    }
+  }
+  return fp
+}
+
+function diffFingerprint(prev: Fingerprint | undefined, curr: Fingerprint): FingerprintDiff {
+  const changed: string[] = []
+  const added: string[] = []
+  const removed: string[] = []
+  const groups = new Set([...Object.keys(prev ?? {}), ...Object.keys(curr)])
+  for (const group of groups) {
+    const p = prev?.[group] ?? {}
+    const c = curr[group] ?? {}
+    const keys = new Set([...Object.keys(p), ...Object.keys(c)])
+    for (const k of keys) {
+      const label = `${group}::${k}`
+      if (p[k] === undefined) added.push(label)
+      else if (c[k] === undefined) removed.push(label)
+      else if (p[k] !== c[k]) changed.push(label)
+    }
+  }
+  changed.sort()
+  added.sort()
+  removed.sort()
+  return { changed, added, removed }
+}
+
+/**
+ * Logs which cookie / localStorage keys differ from the previous successful
+ * upload, so the user can spot rotating values that defeat the whole-payload
+ * hash dedupe and add the offending names to the blacklist.
+ */
+function logPayloadDiff(
+  prev: LastUploadInfo | null | undefined,
+  cookieFp: Fingerprint,
+  localStorageFp: Fingerprint
+): void {
+  if (!prev?.cookieFp && !prev?.localStorageFp) {
+    console.log('[laplace] payload diff: no previous fingerprint, treating as first upload')
+    return
+  }
+
+  const cookie = diffFingerprint(prev?.cookieFp, cookieFp)
+  const localStorage = diffFingerprint(prev?.localStorageFp, localStorageFp)
+  const total =
+    cookie.changed.length +
+    cookie.added.length +
+    cookie.removed.length +
+    localStorage.changed.length +
+    localStorage.added.length +
+    localStorage.removed.length
+
+  if (total === 0) {
+    // Whole-payload hash differed but nothing in the per-key fingerprint did —
+    // usually means a non-fingerprinted field (e.g. cookie expirationDate)
+    // moved. Surface it so we know to widen the fingerprint if it shows up.
+    console.warn(
+      '[laplace] payload hash changed but no per-key value diff; non-value field likely moved (expirationDate / sameSite / etc.)'
+    )
+    return
+  }
+
+  console.log('[laplace] payload changed since last upload', {
+    summary: {
+      cookie: { changed: cookie.changed.length, added: cookie.added.length, removed: cookie.removed.length },
+      localStorage: {
+        changed: localStorage.changed.length,
+        added: localStorage.added.length,
+        removed: localStorage.removed.length,
+      },
+    },
+    cookieChanged: cookie.changed,
+    cookieAdded: cookie.added,
+    cookieRemoved: cookie.removed,
+    lsChanged: localStorage.changed,
+    lsAdded: localStorage.added,
+    lsRemoved: localStorage.removed,
+  })
 }
 
 function splitLines(input: string | undefined): string[] {
