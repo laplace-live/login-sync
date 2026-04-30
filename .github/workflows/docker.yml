@@ -69,13 +69,12 @@ jobs:
       - name: Build and push
         uses: docker/bake-action@v7
         with:
-          source: .
+          source: ./server
           files: |
             ./docker-bake.hcl
             ${{ steps.meta.outputs.bake-file }}
           targets: build-all
           push: ${{ github.event_name != 'pull_request' }}
-          workdir: ./server
           set: |
             *.cache-from=type=gha
             *.cache-to=type=gha,mode=max
