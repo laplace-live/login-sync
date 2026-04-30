@@ -44,7 +44,7 @@ jobs:
         run: bun run zip:firefox
 
       - name: Store the packaged zips
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: extension-v2-builds
           path: extension-v2/.output/*.zip
