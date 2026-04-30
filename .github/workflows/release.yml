@@ -36,18 +36,8 @@ jobs:
       - name: Create release PR or push tags
         uses: changesets/action@v1
         with:
-          # Bumps versions + updates CHANGELOG.md files when the action
-          # decides we're in "version" mode (i.e. there are pending
-          # changesets and no open "Version Packages" PR yet).
+          publish: bun run release
           version: bun run version
-          # Creates per-package git tags when the action decides we're in
-          # "publish" mode (i.e. the "Version Packages" PR has just merged).
-          # We use `changeset tag` (not `changeset publish`) because both
-          # packages are private — there is no npm publish to do; the
-          # actual artifact publishing (Chrome Web Store, GHCR Docker
-          # image) happens in the per-package workflows triggered by the
-          # tags this step creates.
-          publish: bun run tag
           # Create one GitHub Release per package tag, with the new
           # changelog entry as the release body. Per-package publish
           # workflows append their built artifacts to these releases.
