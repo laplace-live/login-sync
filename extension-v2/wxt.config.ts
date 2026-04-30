@@ -13,5 +13,16 @@ export default defineConfig({
     default_locale: 'en',
     host_permissions: ['*://*.bilibili.com/', 'https://bilibili.com/', '*://*.laplace.live/', 'https://laplace.live/'],
     permissions: ['cookies', 'tabs', 'storage', 'alarms', 'unlimitedStorage'],
+    // Firefox built-in data consent (required for new submissions from 2025-11-03).
+    // The extension's purpose is to sync login/session cookies to the user's own
+    // sync server, so authentication info is required for the extension to work.
+    // https://extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/
+    browser_specific_settings: {
+      gecko: {
+        data_collection_permissions: {
+          required: ['authenticationInfo'],
+        },
+      },
+    },
   },
 })
