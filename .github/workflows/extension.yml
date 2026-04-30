@@ -8,9 +8,6 @@ on:
       # Tag format created by Changesets in workspace mode:
       # `<workspace-package-name>@<version>` (e.g. `laplace-login-sync@2.0.3`).
       - "laplace-login-sync@*"
-    paths:
-      - "extension/**"
-      - ".github/workflows/extension.yml"
   pull_request:
     branches:
       - "master"
@@ -50,6 +47,12 @@ jobs:
         with:
           name: extension-builds
           path: extension/.output/*.zip
+          # WXT writes to `.output/`, which actions/upload-artifact treats as
+          # a hidden directory and excludes from the artifact by default
+          # (since v4.4). Without this, the upload silently uploads nothing
+          # and the downstream publish/release jobs have no zips to attach.
+          include-hidden-files: true
+          if-no-files-found: error
 
   store-publish:
     name: Publish to store
