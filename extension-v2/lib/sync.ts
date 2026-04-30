@@ -77,20 +77,36 @@ export async function uploadCookie(payload: ConfigProps): Promise<SyncResult> {
   })
 
   const lastUploaded: LastUploadInfo | null = await loadData(STORAGE_KEY_LAST_UPLOAD)
-  console.debug('[laplace] payload hash', { sha256, lastTs: lastUploaded?.timestamp })
+  const hashChanged = lastUploaded?.sha256 !== sha256
+  // Show the comparison inputs (not just `sha256` and `lastTs`) so the
+  // hashChanged verdict is auditable from the logs alone — otherwise it's
+  // impossible to tell from the existing "payload changed" warning whether
+  // the previously-stored hash was actually different.
+  console.debug('[laplace] payload hash', {
+    sha256,
+    prevSha256: lastUploaded?.sha256,
+    hashChanged,
+    lastTs: lastUploaded?.timestamp,
+  })
 
   if (!payload.forceUpdate && isFreshDuplicate(lastUploaded, sha256)) {
     console.log('[laplace] skip: identical payload within window')
     return { action: 'done', note: '本地 Cookie 数据无变动，不再上传' }
   }
 
-  // Hash mismatch ⇒ we're going to upload. Surface *which* keys actually
-  // changed so the user can identify noisy/rotating cookies (analytics,
-  // marketing, etc.) and add them to the blacklist instead of letting them
-  // trigger an upload every cycle.
+  // We didn't skip, so we're uploading. Three possible reasons reach this
+  // branch — `logPayloadDiff` needs `hashChanged` to tell them apart and
+  // avoid the phantom "non-fingerprinted field shifted" warning when the
+  // payload is actually identical:
+  //   1. SHA256 differs → real cookie/LS change (per-key diff is meaningful).
+  //   2. SHA256 matches but the dedupe window expired → periodic re-upload.
+  //   3. `forceUpdate` set → manual sync from popup, regardless of hash.
   const cookieFp = fingerprintCookies(cookies)
   const localStorageFp = fingerprintLocalStorage(localStorages)
-  logPayloadDiff(lastUploaded, { cookieFp, localStorageFp })
+  logPayloadDiff(lastUploaded, { cookieFp, localStorageFp }, hashChanged, {
+    prev: lastUploaded?.sha256,
+    curr: sha256,
+  })
 
   const aesKey = CryptoJS.MD5(`${payload.uuid}-${payload.password}`).toString().substring(0, 16)
   const encrypted = CryptoJS.AES.encrypt(dataToEncrypt, aesKey).toString()
@@ -115,6 +131,16 @@ export async function uploadCookie(payload: ConfigProps): Promise<SyncResult> {
         cookieFp,
         localStorageFp,
       } satisfies LastUploadInfo)
+      // Confirm the dedupe baseline really got updated. If a subsequent run
+      // logs `prevSha256` that doesn't match this value, it points to either
+      // a write failure or a separate process clobbering the storage key.
+      console.debug('[laplace] saved last-upload state', {
+        sha256,
+        cookieGroups: Object.keys(cookieFp).length,
+        lsGroups: Object.keys(localStorageFp).length,
+      })
+    } else {
+      console.warn('[laplace] response action !== "done"; skipping last-upload save', { result })
     }
     return result ?? { action: 'fail' }
   } catch (error) {

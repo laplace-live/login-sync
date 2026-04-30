@@ -45,12 +45,18 @@ export type LsFingerprint = Record<string, Record<string, string>>
 
 /**
  * The shape `logPayloadDiff` wants to compare. `LastUploadInfo` in `sync.ts`
- * structurally satisfies `Partial<FingerprintSnapshot>` so callers don't need
- * to wrap or cast.
+ * structurally satisfies `Partial<FingerprintSnapshot & { sha256: string }>`
+ * so callers don't need to wrap or cast.
  */
 export interface FingerprintSnapshot {
   cookieFp: CookieFingerprint
   localStorageFp: LsFingerprint
+}
+
+/** Both SHA256 values that drove the `hashChanged` decision, for log clarity. */
+export interface HashContext {
+  prev?: string
+  curr: string
 }
 
 interface CookieDiff {
@@ -199,18 +205,41 @@ function diffLs(prev: LsFingerprint | undefined, curr: LsFingerprint): LsDiff {
 }
 
 /**
- * Logs which cookie / localStorage keys differ from the previous successful
- * upload, so the user can spot rotating values that defeat the whole-payload
- * hash dedupe and add the offending names to the blacklist.
+ * Logs why this upload is happening, decomposed by cookie / LS key when the
+ * dedupe hash actually changed.
  *
- * Cookies are reported in three categories so the cause is unambiguous:
- *   - `valueChanged`: actual `Set-Cookie` value rotation (analytics, marketing).
- *   - `expChanged`:   server-side sliding-expiry refresh (`expirationDate` only).
- *   - `metaChanged`:  `secure`/`httpOnly`/`sameSite`/`session` flag flip.
+ * Behaviour by case:
+ *   - No previous fingerprint:      info — "first upload".
+ *   - `hashChanged === false`:      info — "payload identical, periodic re-sync"
+ *                                   (dedupe window expired, or `forceUpdate`).
+ *   - `hashChanged === true` with   per-key diff in three categories so the
+ *     real per-key changes:         cause is unambiguous:
+ *     - `valueChanged`: actual `Set-Cookie` value rotation (analytics, marketing).
+ *     - `expChanged`:   server-side sliding-expiry refresh (`expirationDate` only).
+ *     - `metaChanged`:  `secure` / `httpOnly` / `sameSite` / `session` flag flip.
+ *   - `hashChanged === true` but    warn — non-fingerprinted field shifted
+ *     no per-key diff:              (cookie array order, `storeId`,
+ *                                   `partitionKey`, `firstPartyDomain`, ...).
+ *
+ * `hashChanged` must be supplied by the caller because this module doesn't see
+ * the whole-payload SHA256; treating "we got here at all" as a hash change
+ * would otherwise produce phantom warnings on every window-expired re-upload
+ * and every `forceUpdate` sync of unchanged data. `hashCtx` is logged inside
+ * the warning so the developer can audit the `hashChanged` verdict in place.
  */
-export function logPayloadDiff(prev: Partial<FingerprintSnapshot> | null | undefined, curr: FingerprintSnapshot): void {
+export function logPayloadDiff(
+  prev: Partial<FingerprintSnapshot> | null | undefined,
+  curr: FingerprintSnapshot,
+  hashChanged: boolean,
+  hashCtx?: HashContext
+): void {
   if (!prev?.cookieFp && !prev?.localStorageFp) {
     console.log('[laplace] payload diff: no previous fingerprint, treating as first upload')
+    return
+  }
+
+  if (!hashChanged) {
+    console.log('[laplace] payload identical to last upload (re-syncing: dedupe window expired or force update)')
     return
   }
 
@@ -233,7 +262,8 @@ export function logPayloadDiff(prev: Partial<FingerprintSnapshot> | null | undef
     // `getAll()` (sorted by creation time, which bumps on idempotent re-set),
     // or `storeId` / `firstPartyDomain` / `partitionKey` shape change.
     console.warn(
-      '[laplace] payload hash changed but per-cookie deep fingerprint identical; check cookie array order or non-fingerprinted fields (storeId / partitionKey / firstPartyDomain)'
+      '[laplace] payload hash changed but per-cookie deep fingerprint identical; check cookie array order or non-fingerprinted fields (storeId / partitionKey / firstPartyDomain)',
+      hashCtx ?? '(no hashCtx supplied)'
     )
     return
   }
