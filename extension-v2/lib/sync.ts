@@ -212,11 +212,25 @@ export function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
+/**
+ * Toolbar action API differs by manifest version: MV3 exposes `browser.action`
+ * while MV2 (which WXT still defaults to for Firefox) exposes `browser.browserAction`.
+ * Pick whichever exists so the same code works in both targets.
+ */
+const actionApi = browser.action ?? browser.browserAction
+
 export function showBadge(text: string, color = 'red', delay = 1000) {
-  browser.action.setBadgeText({ text })
-  browser.action.setBadgeTextColor({ color: [255, 255, 255, 255] })
-  browser.action.setBadgeBackgroundColor({ color })
+  if (!actionApi) {
+    console.warn('[laplace] showBadge: no action API available')
+    return
+  }
+
+  actionApi.setBadgeText({ text })
+  // `setBadgeTextColor` is MV3-only on Chromium and Firefox >= 63; guard so
+  // older Firefox MV2 builds that lack it don't crash the whole upload path.
+  actionApi.setBadgeTextColor?.({ color: [255, 255, 255, 255] })
+  actionApi.setBadgeBackgroundColor({ color })
   setTimeout(() => {
-    browser.action.setBadgeText({ text: '' })
+    actionApi.setBadgeText({ text: '' })
   }, delay)
 }

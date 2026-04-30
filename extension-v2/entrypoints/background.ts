@@ -56,7 +56,7 @@ export default defineBackground(() => {
         const line = keepLiveLines[i]
         const parts = line.split('|')
         const url = parts[0]
-        const interval = parts[1] ? parseInt(parts[1]) : 60
+        const interval = parts[1] ? parseInt(parts[1], 10) : 60
         if (interval > 0 && minuteCount % interval === 0) {
           console.log('[laplace] keep-alive tick', { url, every: interval })
 
@@ -94,21 +94,29 @@ export default defineBackground(() => {
     }
   })
 
-  browser.runtime.onMessage.addListener(
-    (message: SyncRequest, _sender, sendResponse: (response: SyncResponse) => void) => {
-      if (message?.type !== 'config') return false
+  // Use the Promise-return pattern instead of `return true` + `sendResponse`.
+  // Firefox tears the channel down with "Promised response from onMessage
+  // listener went out of scope" if the async work rejects before sendResponse
+  // fires; returning a Promise (and always resolving with a SyncResponse) keeps
+  // the popup happy on both Firefox and Chromium MV3.
+  browser.runtime.onMessage.addListener((message: SyncRequest, _sender): Promise<SyncResponse> | false => {
+    if (message?.type !== 'config') return false
 
-      const payload = message.payload
-      if (!payload?.type) return false
+    const payload = message.payload
+    if (!payload?.type) return false
 
-      uploadCookie(payload).then(result => {
-        sendResponse({
-          message: result.action,
-          note: result.note ?? null,
-        })
-      })
-
-      return true
-    }
-  )
+    return uploadCookie(payload).then(
+      (result): SyncResponse => ({
+        message: result.action,
+        note: result.note ?? null,
+      }),
+      (error): SyncResponse => {
+        console.error('[laplace] uploadCookie threw', error)
+        return {
+          message: 'fail',
+          note: error instanceof Error ? error.message : String(error),
+        }
+      }
+    )
+  })
 })
