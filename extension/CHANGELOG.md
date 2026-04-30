@@ -1,5 +1,11 @@
 # laplace-login-sync
 
+## 2.0.3
+
+### Patch Changes
+
+- 396d968: fix release process
+
 ## 2.0.2
 
 ### Patch Changes
