@@ -1,0 +1,16 @@
+{
+  "name": "laplace-login-sync-monorepo",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "workspaces": [
+    "extension-v2"
+  ],
+  "scripts": {
+    "version": "changeset version",
+    "release": "changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.30.0"
+  }
+}
