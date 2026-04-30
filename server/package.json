@@ -1,6 +1,7 @@
 {
   "name": "laplace-login-sync-server",
   "version": "1.0.7",
+  "private": true,
   "description": "LAPLACE Login Sync Server",
   "type": "module",
   "main": "index.ts",

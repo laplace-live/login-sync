@@ -1,0 +1,59 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - master
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install --frozen-lockfile
+
+      - run: sudo npm install -g npm@latest
+
+      - name: Create release PR or push tags
+        uses: changesets/action@v1
+        with:
+          # Bumps versions + updates CHANGELOG.md files when the action
+          # decides we're in "version" mode (i.e. there are pending
+          # changesets and no open "Version Packages" PR yet).
+          version: bun run version
+          # Creates per-package git tags when the action decides we're in
+          # "publish" mode (i.e. the "Version Packages" PR has just merged).
+          # We use `changeset tag` (not `changeset publish`) because both
+          # packages are private — there is no npm publish to do; the
+          # actual artifact publishing (Chrome Web Store, GHCR Docker
+          # image) happens in the per-package workflows triggered by the
+          # tags this step creates.
+          publish: bun run tag
+          # Create one GitHub Release per package tag, with the new
+          # changelog entry as the release body. Per-package publish
+          # workflows append their built artifacts to these releases.
+          createGithubReleases: true
+          commit: "chore: version packages"
+          title: "chore: version packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ""
