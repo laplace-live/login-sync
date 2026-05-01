@@ -1,5 +1,11 @@
 # laplace-login-sync
 
+## 2.0.5
+
+### Patch Changes
+
+- ca7e2ec: fix release process
+
 ## 2.0.4
 
 ### Patch Changes
