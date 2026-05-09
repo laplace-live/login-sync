@@ -19,6 +19,12 @@ export default defineConfig({
     // https://extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/
     browser_specific_settings: {
       gecko: {
+        // Stable add-on ID matching the existing AMO listing
+        // (https://addons.mozilla.org/api/v5/addons/addon/3007316/ -> guid).
+        // Required by AMO going forward; without it AMO auto-assigns a GUID
+        // each upload, which would break updates for installed users.
+        // https://mzl.la/3PLZYdo
+        id: '{bea1d1bb-2ed3-46bc-92ca-34bcdb3baa85}',
         data_collection_permissions: {
           required: ['authenticationInfo'],
         },
