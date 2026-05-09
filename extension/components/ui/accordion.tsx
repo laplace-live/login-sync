@@ -110,8 +110,9 @@ export function AccordionContent({
     <AccordionPrimitive.Content
       data-slot='accordion-content'
       className={cn(
-        'overflow-hidden transition-[height]',
-        'data-closed:animate-accordion-up data-open:animate-accordion-down'
+        'overflow-hidden transition-[height]'
+        // TODO: This causes the extension popup flashing
+        // 'data-closed:animate-accordion-up data-open:animate-accordion-down'
       )}
       {...props}
     >
