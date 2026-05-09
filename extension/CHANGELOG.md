@@ -1,5 +1,11 @@
 # laplace-login-sync
 
+## 2.0.6
+
+### Patch Changes
+
+- 1d4261a: fix popup animations
+
 ## 2.0.5
 
 ### Patch Changes
