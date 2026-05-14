@@ -1,5 +1,11 @@
 # laplace-login-sync
 
+## 2.0.7
+
+### Patch Changes
+
+- dca5c48: update button
+
 ## 2.0.6
 
 ### Patch Changes
