@@ -1,3 +1,4 @@
+// Copied from laplace-login-sync
 import {
   type BinaryToTextEncoding,
   createCipheriv,
@@ -91,9 +92,10 @@ export function encryptAes(plainText: string, secret: string) {
   const hash: Buffer[] = []
   let digest = password
   for (let i = 0; i < 3; i++) {
-    hash[i] = createHash('md5').update(digest).digest()
+    const currentHash = createHash('md5').update(digest).digest()
+    hash[i] = currentHash
     // hash[i] = new Bun.CryptoHasher('md5').update(digest).digest()
-    digest = Buffer.concat([hash[i]!, password])
+    digest = Buffer.concat([currentHash, password])
   }
   const keyDerivation = Buffer.concat(hash)
   const key = keyDerivation.subarray(0, 32)
@@ -112,12 +114,18 @@ export function decryptAes(encryptedText: string, secret: string) {
   const md5Hashes: Buffer[] = []
   let digest = password
   for (let i = 0; i < 3; i++) {
-    md5Hashes[i] = createHash('md5').update(digest).digest()
+    const currentHash = createHash('md5').update(digest).digest()
+    md5Hashes[i] = currentHash
     // md5Hashes[i] = new Bun.CryptoHasher('md5').update(digest).digest()
-    digest = Buffer.concat([md5Hashes[i]!, password])
+    digest = Buffer.concat([currentHash, password])
   }
-  const key = Buffer.concat([md5Hashes[0]!, md5Hashes[1]!])
-  const iv = md5Hashes[2]!
+  // After the loop, we know md5Hashes has exactly 3 elements
+  const [hash0, hash1, hash2] = md5Hashes
+  if (!hash0 || !hash1 || !hash2) {
+    throw new Error('Failed to generate MD5 hashes')
+  }
+  const key = Buffer.concat([hash0, hash1])
+  const iv = hash2
   const contents = cypher.subarray(16)
   const decipher = createDecipheriv('aes-256-cbc', key, iv)
 
