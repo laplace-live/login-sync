@@ -1,10 +1,10 @@
 import { unlink } from 'node:fs/promises'
+import { unzipSync } from 'node:zlib'
 import { zValidator } from '@hono/zod-validator'
 import { Hono } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
 import { cors } from 'hono/cors'
 import { validator } from 'hono/validator'
-import pako from 'pako'
 import { z } from 'zod'
 
 import { cryptoHash, decryptAes } from './lib/crypto'
@@ -20,7 +20,7 @@ const useAuth = process.env.LAPLACE_LOGIN_SYNC_AUTH_MODE
 const auth = process.env.LAPLACE_LOGIN_SYNC_AUTH_KEY
 
 // this code is inside ./src, so we need to go one level up to access the data folder
-const dataDir = import.meta.dir + '/../data'
+const dataDir = `${import.meta.dir}/../data`
 
 const zStringNotEmpty = (msg?: string) =>
   z
@@ -51,7 +51,7 @@ app.all('/', c => {
 app.post('/update', limiter, async c => {
   try {
     const body = await c.req.arrayBuffer()
-    const raw = pako.inflate(body)
+    const raw = unzipSync(body)
     const decoder = new TextDecoder()
     const text = decoder.decode(raw)
     const json: CookieRequestBody = JSON.parse(text)
@@ -232,7 +232,7 @@ app.onError((err, c) => {
 })
 
 function cookieCloudDecrypt(uuid: string, encrypted: string, password: string) {
-  const key = cryptoHash(uuid + '-' + password, { algorithm: 'md5' }).substring(0, 16)
+  const key = cryptoHash(`${uuid}-${password}`, { algorithm: 'md5' }).substring(0, 16)
   // const decrypted = CryptoJS.AES.decrypt(encrypted, key).toString(CryptoJS.enc.Utf8)
   const decrypted = decryptAes(encrypted, key)
   const parsed = JSON.parse(decrypted)

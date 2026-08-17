@@ -1,5 +1,5 @@
+import { unzipSync } from 'node:zlib'
 import type { Context } from 'hono'
-import pako from 'pako'
 
 interface CookieRequestBody {
   uuid: string
@@ -7,9 +7,9 @@ interface CookieRequestBody {
 }
 
 export const Update = async (c: Context) => {
-  const dataDir = import.meta.dir + '/data'
+  const dataDir = `${import.meta.dir}/data`
   const body = await c.req.arrayBuffer()
-  const raw = pako.inflate(body)
+  const raw = unzipSync(body)
   const decoder = new TextDecoder()
   const text = decoder.decode(raw)
 
