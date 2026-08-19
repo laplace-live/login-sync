@@ -40,20 +40,19 @@ jobs:
       - run: sudo npm install -g npm@latest
 
       - name: Create release PR or push tags
-        uses: changesets/action@v1
+        uses: changesets/action@v2
         with:
-          publish: bun run release
-          version: bun run version
+          publish-script: bun run release
+          version-script: bun run version
           # Create one GitHub Release per package tag, with the new
           # changelog entry as the release body. Per-package publish
           # workflows append their built artifacts to these releases.
-          createGithubReleases: true
-          commit: "chore: version packages"
-          title: "chore: version packages"
-        env:
+          create-github-releases: true
+          commit-message: "chore: version packages"
+          pr-title: "chore: version packages"
           # Same PAT as the checkout step. Used by changesets/action for
-          # API calls (creating the version PR, GitHub releases) AND
-          # propagated to git pushes so the tag push triggers downstream
-          # workflows.
-          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
-          NPM_TOKEN: ""
+          # API calls (creating the version PR, GitHub releases) AND for the
+          # tag push, so the tag triggers downstream workflows. The token
+          # must be passed via this input: the action stopped reading the
+          # `GITHUB_TOKEN` env var in v2.
+          github-token: ${{ secrets.RELEASE_PAT }}
