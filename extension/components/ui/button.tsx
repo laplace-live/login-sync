@@ -1,9 +1,8 @@
 'use client'
 
 import { cva, type VariantProps } from 'class-variance-authority'
+import { cn } from 'cn'
 import { Slot } from 'radix-ui'
-
-import { cn } from '@/utils/cn'
 
 import { Loading } from './loading'
 

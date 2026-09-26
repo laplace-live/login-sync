@@ -1,9 +1,8 @@
 'use client'
 
 import { IconAsterisk } from '@tabler/icons-react'
+import { cn } from 'cn'
 import { Label as LabelPrimitive } from 'radix-ui'
-
-import { cn } from '@/utils/cn'
 
 function Label({
   className,

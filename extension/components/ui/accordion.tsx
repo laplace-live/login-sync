@@ -2,10 +2,9 @@
 
 import { IconChevronDown } from '@tabler/icons-react'
 import { cva, type VariantProps } from 'class-variance-authority'
+import { cn } from 'cn'
 import { Accordion as AccordionPrimitive } from 'radix-ui'
 import * as React from 'react'
-
-import { cn } from '@/utils/cn'
 
 type AccordionVariant = 'outline' | 'separated'
 
