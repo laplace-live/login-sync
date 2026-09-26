@@ -80,7 +80,7 @@ The extension, the server, and `client-python/` all implement the same format by
 - **Key derivation**: `MD5(uuid + '-' + password)` as a hex string, first 16 characters. That 16-char string is then the *passphrase* (not the key) handed to CryptoJS.
 - **Cipher**: `CryptoJS.AES.encrypt` defaults — OpenSSL `Salted__` envelope, EVP_BytesToKey with MD5 and 3 rounds, AES-256-CBC, PKCS7, base64. `server/src/lib/crypto.ts` reimplements exactly that on `node:crypto` (three MD5 rounds → key = hash0‖hash1, iv = hash2) because it is ~10× faster than CryptoJS; `client-python/PyCryptoJS.py` is the third copy.
 - **Plaintext shape**: `{ cookie_data, local_storage_data }` — snake_case, and `/remove` uses the presence of `cookie_data` after decryption as proof the caller knows the password.
-- **Transport**: the extension gzips (`pako`) the JSON `{ uuid, encrypted }` and POSTs it as a raw body with `Content-Encoding: gzip`; the server `pako.inflate`s it back.
+- **Transport**: the extension gzips the JSON `{ uuid, encrypted }` with the built-in `CompressionStream` and POSTs it as a raw body with `Content-Encoding: gzip`; the server decompresses it with `node:zlib`'s `unzipSync`.
 
 `uuid` is not a UUID — it's a `short-uuid` token, validated as `/^[a-zA-Z0-9]+$/`. That regex is the path-traversal guard, because the token becomes the filename.
 

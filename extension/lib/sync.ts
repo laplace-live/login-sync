@@ -1,5 +1,4 @@
 import CryptoJS from 'crypto-js'
-import { gzip } from 'pako'
 
 import type { ConfigProps, DomainConfig } from './types'
 
@@ -120,7 +119,7 @@ export async function uploadCookie(payload: ConfigProps): Promise<SyncResult> {
         'Content-Encoding': 'gzip',
         ...extraHeaders,
       },
-      body: gzip(JSON.stringify({ uuid: payload.uuid, encrypted })),
+      body: await gzip(JSON.stringify({ uuid: payload.uuid, encrypted })),
     })
 
     const body: unknown = await response.json()
@@ -157,6 +156,13 @@ function isFreshDuplicate(last: LastUploadInfo | null | undefined, sha256: strin
   // to preserve the original skip-on-dupe behaviour.
   const ts = last.timestamp ?? Date.now()
   return Date.now() - ts < SYNC_DEDUPE_WINDOW_MS
+}
+
+// Buffered on purpose: handing the stream straight to `fetch` needs `duplex: 'half'`,
+// which Firefox doesn't support and Chromium rejects over HTTP/1.x.
+async function gzip(text: string): Promise<ArrayBuffer> {
+  const stream = new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'))
+  return new Response(stream).arrayBuffer()
 }
 
 function splitLines(input: string | undefined): string[] {
