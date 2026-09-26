@@ -1,5 +1,9 @@
 export type Action = 'up' | 'pause'
 
+export function isAction(value: unknown): value is Action {
+  return value === 'up' || value === 'pause'
+}
+
 export interface ConfigProps {
   endpoint: string
   password: string

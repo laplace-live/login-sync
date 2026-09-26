@@ -123,7 +123,8 @@ export async function uploadCookie(payload: ConfigProps): Promise<SyncResult> {
       body: gzip(JSON.stringify({ uuid: payload.uuid, encrypted })),
     })
 
-    const result = (await response.json()) as SyncResult | undefined
+    const body: unknown = await response.json()
+    const result = isSyncResult(body) ? body : undefined
     if (result?.action === 'done') {
       await saveData(STORAGE_KEY_LAST_UPLOAD, {
         timestamp: Date.now(),
@@ -140,7 +141,7 @@ export async function uploadCookie(payload: ConfigProps): Promise<SyncResult> {
         lsGroups: Object.keys(localStorageFp).length,
       })
     } else {
-      console.warn('[laplace] response action !== "done"; skipping last-upload save', { result })
+      console.warn('[laplace] response action !== "done"; skipping last-upload save', { result: body })
     }
     return result ?? { action: 'fail' }
   } catch (error) {
@@ -256,6 +257,13 @@ function pickByKey(source: Record<string, unknown>, predicate: (key: string) => 
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
+}
+
+// The server's 400 paths answer `{ code, message }` rather than a `SyncResult`.
+function isSyncResult(value: unknown): value is SyncResult {
+  return (
+    isRecord(value) && typeof value.action === 'string' && (value.note === undefined || typeof value.note === 'string')
+  )
 }
 
 export function sleep(ms: number): Promise<void> {

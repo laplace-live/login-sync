@@ -10,4 +10,19 @@ export type SyncResponse = {
   note: string | null
 }
 
-export const sendSync = (req: SyncRequest) => browser.runtime.sendMessage(req) as Promise<SyncResponse>
+function isSyncResponse(value: unknown): value is SyncResponse {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'message' in value &&
+    typeof value.message === 'string' &&
+    'note' in value &&
+    (typeof value.note === 'string' || value.note === null)
+  )
+}
+
+/** Resolves `undefined` when the reply isn't a `SyncResponse`, e.g. when the background listener declines the message. */
+export async function sendSync(req: SyncRequest): Promise<SyncResponse | undefined> {
+  const response: unknown = await browser.runtime.sendMessage(req)
+  return isSyncResponse(response) ? response : undefined
+}

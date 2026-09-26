@@ -1,7 +1,6 @@
 import { toast } from 'sonner'
 
-import type { ConfigProps } from '@/lib/types'
-
+import { isAction } from '@/lib/types'
 import { useSyncConfig } from '@/lib/use-sync-config'
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
@@ -130,7 +129,9 @@ function App() {
         <RadioGroup
           name='working-method'
           value={config.type}
-          onValueChange={value => setConfig({ ...config, type: value as ConfigProps['type'] })}
+          onValueChange={value => {
+            if (isAction(value)) setConfig({ ...config, type: value })
+          }}
           className='flex gap-2'
         >
           <div className='flex items-center gap-1.5'>

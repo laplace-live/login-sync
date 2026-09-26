@@ -40,6 +40,29 @@ export function getDefaultConfig(): ConfigProps {
   }
 }
 
+/**
+ * Deliberately shallow: a stored config is merged over fresh defaults, not
+ * validated field by field. Entries saved before a field existed lack it, and
+ * extension-v1 saved `interval` as a string that the scheduler still coerces.
+ * Rejecting either would show generated credentials in place of the user's
+ * real ones, and the next Save would overwrite them.
+ */
+function isStoredConfig(value: unknown): value is Partial<ConfigProps> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+// The snapshot's config is the merged in-memory one, so it gets the same shallow check.
+function isPreviousConfig(value: unknown): value is PreviousConfig {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'config' in value &&
+    isStoredConfig(value.config) &&
+    'savedAt' in value &&
+    typeof value.savedAt === 'number'
+  )
+}
+
 export function validateConfig(c: ConfigProps): string | null {
   if (!c.endpoint || !c.password || !c.uuid || !c.type) return '请填写完整的信息'
   return null
@@ -75,17 +98,17 @@ export function useSyncConfig() {
     let cancelled = false
     ;(async () => {
       try {
-        const [stored, prev] = (await Promise.all([
+        const [stored, prev]: unknown[] = await Promise.all([
           loadData(STORAGE_KEY_CONFIG),
           loadData(STORAGE_KEY_CONFIG_PREVIOUS),
-        ])) as [ConfigProps | null, PreviousConfig | null]
+        ])
         if (cancelled) return
-        if (stored) {
+        if (isStoredConfig(stored)) {
           setConfig(c => ({ ...c, ...stored }))
           setIsConfigured(true)
           setCanStash(true)
         }
-        if (prev?.config) setPreviousConfig(prev)
+        if (isPreviousConfig(prev)) setPreviousConfig(prev)
       } catch (err) {
         console.error('[laplace] failed to load stored config', err)
         if (!cancelled) setLoadError(err instanceof Error ? err : new Error(String(err)))
