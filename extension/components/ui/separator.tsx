@@ -25,16 +25,20 @@ function Separator({
       className={cn(
         'relative flex items-center gap-1.5 whitespace-nowrap text-xs',
 
-        // Horizontal mode needs to support inline text, use pseudo elements for lines
+        // Horizontal mode needs to support inline text, use pseudo elements for lines.
+        // Use flex-1 so each line grows to fill the remaining space alongside the children;
+        // w-full would size each pseudo to 100% of the parent and overflow when combined with children.
         'data-horizontal:after:bg-fg/20 data-horizontal:after:content-[""]',
-        'data-horizontal:after:h-px data-horizontal:after:w-full data-horizontal:after:shrink-0',
+        'data-horizontal:after:h-px data-horizontal:after:flex-1',
         'data-horizontal:before:bg-fg/20 data-horizontal:before:content-[""]',
-        'data-horizontal:before:h-px data-horizontal:before:w-full data-horizontal:before:shrink-0',
+        'data-horizontal:before:h-px data-horizontal:before:flex-1',
 
-        // Extended mode
-        // extended && 'before:border-t-fg/20 before:w-2.5 before:border-t before:content-[""]',
+        // Extended mode: short fixed-width tab on the opposite side from the children.
+        // flex-none cancels flex-1 so the explicit width takes effect.
         'data-[extended=true]:data-[position=start]:data-horizontal:before:w-2.5',
+        'data-[extended=true]:data-[position=start]:data-horizontal:before:flex-none',
         'data-[extended=true]:data-[position=end]:data-horizontal:after:w-2.5',
+        'data-[extended=true]:data-[position=end]:data-horizontal:after:flex-none',
 
         // Positions
         'data-[extended=false]:data-[position=end]:data-horizontal:after:hidden',

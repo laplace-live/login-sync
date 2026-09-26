@@ -2,18 +2,26 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from 'cn'
 import type * as React from 'react'
 
-const alertVariantsConfig = {
-  tint: {
-    default: 'bg-fg/5 text-fg border-fg',
-    accent: 'bg-ac/10 text-[color-mix(in_oklch,var(--color-ac),var(--color-fg)_60%)] border-ac',
-    danger: 'border-rose-500 text-rose-500 bg-rose-500/10',
-    success: 'border-emerald-500 text-emerald-500 bg-emerald-500/10',
-    warning: 'border-orange-500 text-orange-500 bg-orange-500/10',
-    info: 'border-blue-500 text-blue-500 bg-blue-500/10',
-  },
-}
+// Canonical tint list; the cva `tint` map below is checked against it via `satisfies`
+const alertTints = ['default', 'accent', 'danger', 'success', 'warning', 'info'] as const
 
-const alertDecoratorConfig: Record<keyof typeof alertVariantsConfig.tint, string> = {
+const alertVariants = cva('relative w-full rounded-lg px-2 py-2 pl-1.5 text-base md:text-sm', {
+  variants: {
+    tint: {
+      default: 'border-fg bg-fg/5 text-fg',
+      accent: 'border-ac bg-ac/10 text-[color-mix(in_oklch,var(--color-ac),var(--color-fg)_60%)]',
+      danger: 'border-rose-500 bg-rose-500/10 text-rose-500',
+      success: 'border-emerald-500 bg-emerald-500/10 text-emerald-500',
+      warning: 'border-orange-500 bg-orange-500/10 text-orange-500',
+      info: 'border-blue-500 bg-blue-500/10 text-blue-500',
+    } satisfies Record<(typeof alertTints)[number], string>,
+  },
+  defaultVariants: {
+    tint: 'default',
+  },
+})
+
+const alertDecoratorConfig: Record<(typeof alertTints)[number], string> = {
   default: 'bg-fg',
   accent: 'bg-ac',
   danger: 'bg-rose-500',
@@ -21,13 +29,6 @@ const alertDecoratorConfig: Record<keyof typeof alertVariantsConfig.tint, string
   warning: 'bg-orange-500',
   info: 'bg-blue-500',
 }
-
-const alertVariants = cva('relative w-full rounded px-2 py-2 pl-1.5 md:text-sm', {
-  variants: alertVariantsConfig,
-  defaultVariants: {
-    tint: 'default',
-  },
-})
 
 interface AlertProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof alertVariants> {
   children?: React.ReactNode
@@ -44,7 +45,7 @@ function Alert({ className, tint, children, label, icon, ...props }: React.Compo
         <div
           data-slot='alert-decorator'
           role='none'
-          className={cn('w-0.5 rounded-sm', alertDecoratorConfig[tint ?? 'default'])}
+          className={cn('w-0.5 rounded-full', alertDecoratorConfig[tint ?? 'default'])}
         ></div>
         {icon && (
           <div data-slot='alert-icon' className='shrink-0 [&>svg]:-me-0.5 [&>svg]:size-5'>
@@ -60,4 +61,4 @@ function Alert({ className, tint, children, label, icon, ...props }: React.Compo
   )
 }
 
-export { Alert, alertVariantsConfig }
+export { Alert, alertTints, alertVariants }

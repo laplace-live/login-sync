@@ -1,60 +1,85 @@
-'use client'
-
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from 'cn'
 import { Slot } from 'radix-ui'
 
-import { Loading } from './loading'
+import { Spinner } from './spinner'
 
-const buttonVariantsConfig = {
-  // Should match Input, Toggle
-  size: {
-    sm: 'text-xs rounded-sm h-6 px-1.5 [&>svg]:size-3',
-    default: 'text-sm rounded-md h-8 px-2.5 [&>svg]:size-4 [&>svg]:-mx-0.5',
-    lg: 'text-base rounded-md gap-2 h-10 px-3.5 [&>svg]:size-5 [&>svg]:-mx-1',
-    'icon-sm': 'rounded-sm size-6 [&>svg]:size-4',
-    icon: 'rounded-md size-8 [&>svg]:size-5',
-    'icon-lg': 'rounded-md size-10 [&>svg]:size-6',
-  },
-  variant: {
-    // map to "secondary" in shadcn
-    default: 'border-current/5',
-    // map to "primary" in shadcn
-    solid: 'shadow-md ',
-    outline: 'bg-transparent shadow-xs not-disabled:hover:bg-current/10',
-    ghost: 'border-transparent text-fg bg-transparent not-disabled:hover:bg-current/10',
-    link: 'border-transparent underline-offset-2 hover:underline',
-  },
-  tint: {
-    default: 'text-fg focus-visible:ring-fg/30',
-    accent: 'text-ac focus-visible:ring-ac/30',
-    gray: 'text-gray-500 focus-visible:ring-gray-500/30',
-    red: 'text-red-500 focus-visible:ring-red-500/30',
-    orange: 'text-orange-500 focus-visible:ring-orange-500/30',
-    amber: 'text-amber-500 focus-visible:ring-amber-500/30',
-    yellow: 'text-yellow-500 focus-visible:ring-yellow-500/30',
-    lime: 'text-lime-500 focus-visible:ring-lime-500/30',
-    green: 'text-green-500 focus-visible:ring-green-500/30',
-    emerald: 'text-emerald-500 focus-visible:ring-emerald-500/30',
-    teal: 'text-teal-500 focus-visible:ring-teal-500/30',
-    cyan: 'text-cyan-500 focus-visible:ring-cyan-500/30',
-    sky: 'text-sky-500 focus-visible:ring-sky-500/30',
-    blue: 'text-blue-500 focus-visible:ring-blue-500/30',
-    indigo: 'text-indigo-500 focus-visible:ring-indigo-500/30',
-    violet: 'text-violet-500 focus-visible:ring-violet-500/30',
-    purple: 'text-purple-500 focus-visible:ring-purple-500/30',
-    fuchsia: 'text-fuchsia-500 focus-visible:ring-fuchsia-500/30',
-    pink: 'text-pink-500 focus-visible:ring-pink-500/30',
-    rose: 'text-rose-500 focus-visible:ring-rose-500/30',
-    white: 'text-white focus-visible:ring-white/30',
-    black: 'text-black focus-visible:ring-black/30',
-  },
-}
+// Canonical tint list; the cva `tint` map below is checked against it via `satisfies`
+const buttonTints = [
+  'default',
+  'accent',
+  'gray',
+  'red',
+  'orange',
+  'amber',
+  'yellow',
+  'lime',
+  'green',
+  'emerald',
+  'teal',
+  'cyan',
+  'sky',
+  'blue',
+  'indigo',
+  'violet',
+  'purple',
+  'fuchsia',
+  'pink',
+  'rose',
+  'white',
+  'black',
+] as const
 
 const buttonVariants = cva(
   'focus-ring inline-flex appearance-none items-center justify-center gap-1 whitespace-nowrap border font-medium focus-visible:border-current disabled:cursor-not-allowed disabled:opacity-50',
   {
-    variants: buttonVariantsConfig,
+    variants: {
+      // Should match Input, Toggle
+      size: {
+        xs: 'h-6 rounded-md px-1.5 text-xs has-[>[data-kbd=only]]:px-0.75 has-[>[data-kbd=inline-end]]:pr-0.75 has-data-[icon=inline-end]:pr-1.5 has-[>[data-kbd=inline-start]]:pl-0.75 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*="size-"])]:size-3',
+        sm: 'h-7 rounded-md px-2 text-[0.8rem] has-[>[data-kbd=only]]:px-1 has-[>[data-kbd=inline-end]]:pr-1 has-data-[icon=inline-end]:pr-1.5 has-[>[data-kbd=inline-start]]:pl-1 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*="size-"])]:size-3',
+        default:
+          'h-8 rounded-lg px-2.5 text-sm has-[>[data-kbd=only]]:px-1.5 has-[>[data-kbd=inline-end]]:pr-1.5 has-data-[icon=inline-end]:pr-2 has-[>[data-kbd=inline-start]]:pl-1.5 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*="size-"])]:size-4',
+        lg: 'h-10 gap-2 rounded-lg px-3.5 text-base has-[>[data-kbd=only]]:px-2 has-[>[data-kbd=inline-end]]:pr-2 has-data-[icon=inline-end]:pr-2 has-[>[data-kbd=inline-start]]:pl-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*="size-"])]:size-5',
+        'icon-xs': 'size-6 rounded-md [&_svg:not([class*="size-"])]:size-4',
+        'icon-sm': 'size-7 rounded-md [&_svg:not([class*="size-"])]:size-4.5',
+        icon: 'size-8 rounded-lg [&_svg:not([class*="size-"])]:size-5',
+        'icon-lg': 'size-10 rounded-lg [&_svg:not([class*="size-"])]:size-6',
+      },
+      variant: {
+        // map to "secondary" in shadcn
+        default: 'border-current/5',
+        // map to "primary" in shadcn
+        solid: 'shadow-md',
+        outline: 'bg-transparent shadow-xs not-disabled:hover:bg-current/10',
+        ghost: 'border-transparent bg-transparent text-fg not-disabled:hover:bg-current/10',
+        link: 'border-transparent underline-offset-2 hover:underline',
+      },
+      tint: {
+        default: 'text-fg focus-visible:ring-fg/30',
+        accent: 'text-ac focus-visible:ring-ac/30',
+        gray: 'text-gray-500 focus-visible:ring-gray-500/30',
+        red: 'text-red-500 focus-visible:ring-red-500/30',
+        orange: 'text-orange-500 focus-visible:ring-orange-500/30',
+        amber: 'text-amber-500 focus-visible:ring-amber-500/30',
+        yellow: 'text-yellow-500 focus-visible:ring-yellow-500/30',
+        lime: 'text-lime-500 focus-visible:ring-lime-500/30',
+        green: 'text-green-500 focus-visible:ring-green-500/30',
+        emerald: 'text-emerald-500 focus-visible:ring-emerald-500/30',
+        teal: 'text-teal-500 focus-visible:ring-teal-500/30',
+        cyan: 'text-cyan-500 focus-visible:ring-cyan-500/30',
+        sky: 'text-sky-500 focus-visible:ring-sky-500/30',
+        blue: 'text-blue-500 focus-visible:ring-blue-500/30',
+        indigo: 'text-indigo-500 focus-visible:ring-indigo-500/30',
+        violet: 'text-violet-500 focus-visible:ring-violet-500/30',
+        purple: 'text-purple-500 focus-visible:ring-purple-500/30',
+        fuchsia: 'text-fuchsia-500 focus-visible:ring-fuchsia-500/30',
+        pink: 'text-pink-500 focus-visible:ring-pink-500/30',
+        rose: 'text-rose-500 focus-visible:ring-rose-500/30',
+        white: 'text-white focus-visible:ring-white/30',
+        black: 'text-black focus-visible:ring-black/30',
+      } satisfies Record<(typeof buttonTints)[number], string>,
+    },
     // prettier-ignore
     // biome-ignore format: keep long lines for readability
     compoundVariants: [
@@ -113,11 +138,6 @@ const buttonVariants = cva(
 
       // Link
       { variant: 'link', tint: 'default', className: 'not-disabled:hover:text-ac focus-visible:border-ac focus-visible:ring-ac/30 data-open:text-ac' },
-
-      // Dot variant padding adjustments
-      // { variant: 'dot', size: 'default', className: 'pl-4.5' },
-      // { variant: 'dot', size: 'sm', className: 'pl-[0.85rem]' },
-      // { variant: 'dot', size: 'lg', className: 'pl-5' },
     ],
     defaultVariants: {
       size: 'default',
@@ -161,7 +181,7 @@ function Button({
   return (
     <Comp
       data-slot='button'
-      className={cn(buttonVariants({ variant, size, tint, className }), loading && 'cursor-wait')}
+      className={cn(buttonVariants({ variant, size, tint, className }), loading && 'cursor-wait!')}
       {...props}
     >
       {leftSection ? (
@@ -170,7 +190,7 @@ function Button({
 
       <Slot.Slottable>{children}</Slot.Slottable>
 
-      {loading && <Loading />}
+      {loading && <Spinner />}
       {rightSection ? (
         <div className={cn('flex items-center justify-center', rightSectionClassName)}>{rightSection}</div>
       ) : null}
@@ -178,4 +198,4 @@ function Button({
   )
 }
 
-export { Button, buttonVariants, buttonVariantsConfig }
+export { Button, buttonTints, buttonVariants }

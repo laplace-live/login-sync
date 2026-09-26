@@ -10,7 +10,7 @@ import {
 // https://ui.shadcn.com/docs/components/sonner
 import { Toaster as Sonner } from 'sonner'
 
-import { Loading } from './loading'
+import { Spinner } from './spinner'
 
 type ToasterProps = React.ComponentProps<typeof Sonner>
 
@@ -21,7 +21,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       toastOptions={{
         unstyled: true,
         classNames: {
-          toast: 'group floating p-3 rounded-lg flex gap-2 items-center w-(--width)',
+          toast: 'group floating p-4 rounded-lg flex gap-2 items-center w-(--width)',
           title: 'font-medium text-sm',
           description: 'text-sm text-fg/60',
           // closeButton:
@@ -34,8 +34,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
           warning: '**:data-icon:text-amber-500',
           error: '**:data-icon:text-rose-500',
           actionButton:
-            'shrink-0 px-2 py-0.5 text-sm rounded-sm border border-fg/30 shadow-xs focus-ring hover:bg-fg/5',
-          cancelButton: 'shrink-0 px-2 py-0.5 text-sm rounded-sm focus-ring',
+            'shrink-0 px-2 py-0.5 text-sm rounded-md border border-fg/30 shadow-xs focus-ring hover:bg-fg/5',
+          cancelButton: 'shrink-0 px-2 py-0.5 text-sm rounded-md focus-ring',
           loader: 'flex items-center',
           icon: 'relative flex flex-shrink-0 items-center self-start size-5 -ml-0.5 [&>svg]:flex [&>svg]:flex-auto',
         },
@@ -46,7 +46,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
         info: <IconInfoCircleFilled className='size-5' />,
         warning: <IconAlertTriangleFilled className='size-5' />,
         error: <IconAlertCircleFilled className='size-5' />,
-        loading: <Loading className='size-5' />,
+        loading: <Spinner className='size-5' />,
         close: <IconMinus className='size-3' />,
       }}
       gap={10}
