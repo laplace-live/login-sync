@@ -1,8 +1,11 @@
 {
   // https://bun.sh/docs/typescript#suggested-compileroptions
   "compilerOptions": {
-    // Enable latest features
-    "lib": ["ESNext"],
+    // Enable latest features. DOM is for the SDK source that `paths` pulls in below: it's typed against the web
+    // platform, and names like `KeyUsage` exist only in lib.dom
+    "lib": ["ESNext", "DOM"],
+    // TypeScript 6 and later load no @types packages unless listed here. @types/bun brings Node's types with it
+    "types": ["bun"],
     "target": "ESNext",
     "module": "Preserve",
     "moduleDetection": "force",
