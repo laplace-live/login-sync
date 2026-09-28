@@ -93,10 +93,11 @@ app.post('/update', limiter, async c => {
   try {
     const body = await c.req.arrayBuffer()
     // `bodyLimit` caps the compressed body; without a cap here too, gzip's ratio does the rest — a few MB of zeros
-    // inflates to gigabytes, synchronously, stalling every other request while it allocates. The same limit serves both
-    // ends because a real upload can't be compressed: the payload is base64 ciphertext, which is high-entropy, so its
-    // gzipped size is its plain size. Over the cap, `unzipSync` throws and the handler answers 413 below
-    const raw = unzipSync(body, { maxOutputLength: MAX_UPLOAD_BYTES })
+    // inflates to gigabytes, synchronously, stalling every other request while it allocates. This cap can't just equal
+    // `bodyLimit`, though: base64 spends 8 bits on every 6 of ciphertext, so gzip shrinks a real upload to about 3/4 of
+    // its size, and a body just under the limit inflates to 5.3 MB. Twice the limit admits every upload `bodyLimit`
+    // does. Over the cap, `unzipSync` throws and the handler answers 413 below
+    const raw = unzipSync(body, { maxOutputLength: 2 * MAX_UPLOAD_BYTES })
     const decoder = new TextDecoder()
     const text = decoder.decode(raw)
     const json: CookieRequestBody = JSON.parse(text)

@@ -1,4 +1,5 @@
 import { afterAll, describe, expect, test } from 'bun:test'
+import { randomBytes } from 'node:crypto'
 import { mkdtemp, rmdir, unlink } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -20,21 +21,34 @@ describe('events', () => {
 
 describe('/update limits', () => {
   const uuid = 'inflationtest'
+  const shrunkUuid = 'shrunkupload'
 
   afterAll(async () => {
-    await unlink(`${dataDir}/${uuid}.json`).catch(() => {})
+    await Promise.all([uuid, shrunkUuid].map(id => unlink(`${dataDir}/${id}.json`).catch(() => {})))
   })
 
   test('refuses a body that inflates past the size cap', async () => {
     // `bodyLimit` only sees the compressed body, so the guard that matters is the decompressor's own output cap. This
-    // gzips to a few KB and inflates to 8 MB: uncapped it parses and stores, answering `done`, which is what makes this
-    // a regression test for the cap rather than for the JSON check
-    const body = Bun.gzipSync(JSON.stringify({ uuid, encrypted: 'A'.repeat(8 * 1024 * 1024) }))
+    // gzips to a few KB and inflates to 16 MB: uncapped it parses and stores, answering `done`, which is what makes
+    // this a regression test for the cap rather than for the JSON check
+    const body = Bun.gzipSync(JSON.stringify({ uuid, encrypted: 'A'.repeat(16 * 1024 * 1024) }))
     expect(body.byteLength).toBeLessThan(64 * 1024)
 
     const res = await app.fetch(new Request('http://localhost/update', { method: 'POST', body }))
     expect(res.status).toBe(413)
     expect(await Bun.file(`${dataDir}/${uuid}.json`).exists()).toBe(false)
+  })
+
+  test('stores a real upload that gzip shrank under the body limit', async () => {
+    // Random bytes in base64 are what ciphertext looks like to gzip, which shrinks them to about 3/4. This body fits
+    // under `bodyLimit` while its JSON doesn't, so a decompression cap equal to the body limit would refuse it
+    const json = JSON.stringify({ uuid: shrunkUuid, encrypted: randomBytes(3_500_000).toString('base64') })
+    const body = Bun.gzipSync(json)
+    expect(json.length).toBeGreaterThan(4 * 1024 * 1024)
+    expect(body.byteLength).toBeLessThan(4 * 1024 * 1024)
+
+    const res = await app.fetch(new Request('http://localhost/update', { method: 'POST', body }))
+    expect(await res.json()).toEqual({ action: 'done' })
   })
 })
 
