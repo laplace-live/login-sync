@@ -9,7 +9,7 @@ export default defineConfig({
   // the SDK's published package.json stays free of workspace plumbing. It points at a file, so a subpath import such
   // as `@laplace.live/login-sync/vectors.json` would break under it.
   alias: {
-    '@laplace.live/login-sync': '../packages/login-sync/src/index.ts',
+    '@laplace.live/login-sync': '../../packages/login-sync/src/index.ts',
   },
   vite: () => ({
     plugins: [tailwindcss()],

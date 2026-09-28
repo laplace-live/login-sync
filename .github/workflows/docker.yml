@@ -27,7 +27,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./server
+        working-directory: ./apps/server
 
     steps:
       - uses: actions/checkout@v7
@@ -69,13 +69,13 @@ jobs:
       - name: Build and push
         uses: docker/bake-action@v7
         with:
-          source: ./server
+          source: ./apps/server
           files: |
             ./docker-bake.hcl
             ${{ steps.meta.outputs.bake-file }}
-          # The build context is the repo root (`context = ".."` in docker-bake.hcl), because the server imports the
-          # SDK source from packages/login-sync; Bake refuses to read outside server/ without this entitlement
-          allow: fs.read=..
+          # The build context is the repo root (`context = "../.."` in docker-bake.hcl), because the server imports the
+          # SDK source from packages/login-sync; Bake refuses to read outside apps/server/ without this entitlement
+          allow: fs.read=../..
           targets: build-all
           push: ${{ github.event_name != 'pull_request' }}
           set: |

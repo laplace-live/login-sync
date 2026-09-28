@@ -1,7 +1,7 @@
 # Login Sync payload protocol
 
 How LAPLACE Login Sync encrypts a browser's cookies so that the sync server only ever stores ciphertext. The extension
-writes blobs; the server's password-taking routes, the LAPLACE workers and `client-python` read them.
+writes blobs; the server's password-taking routes and the LAPLACE workers read them.
 `@laplace.live/login-sync` is the reference implementation, and every implementation must pass
 [`vectors.json`](./vectors.json).
 

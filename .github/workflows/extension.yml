@@ -12,7 +12,7 @@ on:
     branches:
       - "master"
     paths:
-      - "extension/**"
+      - "apps/extension/**"
       # The extension bundles the SDK from source
       - "packages/login-sync/**"
       - ".github/workflows/extension.yml"
@@ -24,7 +24,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./extension
+        working-directory: ./apps/extension
 
     steps:
       - name: Checkout
@@ -48,7 +48,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: extension-builds
-          path: extension/.output/*.zip
+          path: apps/extension/.output/*.zip
           # WXT writes to `.output/`, which actions/upload-artifact treats as
           # a hidden directory and excludes from the artifact by default
           # (since v4.4). Without this, the upload silently uploads nothing
@@ -69,7 +69,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./extension
+        working-directory: ./apps/extension
 
     steps:
       - name: Checkout
@@ -87,7 +87,7 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: extension-builds
-          path: extension/.output/
+          path: apps/extension/.output/
 
       # `wxt submit` wraps publish-browser-extension, which reads these env vars:
       # https://github.com/aklinker1/publish-browser-extension/blob/main/docs/config-reference.md
@@ -142,7 +142,7 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: extension-builds
-          path: extension/.output/
+          path: apps/extension/.output/
 
       # Create the release if it doesn't already exist. The legacy
       # extension.yml workflow may have created it on the same tag, in which
@@ -161,5 +161,5 @@ jobs:
         # `--clobber` so re-runs (or coexistence with the legacy workflow)
         # don't fail when filenames overlap.
         run: >-
-          gh release upload '${{ github.ref_name }}' extension/.output/*.zip
+          gh release upload '${{ github.ref_name }}' apps/extension/.output/*.zip
           --clobber --repo '${{ github.repository }}'

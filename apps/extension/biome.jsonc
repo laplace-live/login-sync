@@ -1,5 +1,7 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  // A project config under the repo-root biome.jsonc; its settings stand alone rather than extending the root ones
+  "root": false,
   "vcs": {
     "enabled": true,
     "clientKind": "git",

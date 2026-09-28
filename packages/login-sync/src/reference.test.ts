@@ -1,7 +1,7 @@
 /**
  * A second implementation of both versions on node:crypto, written from PROTOCOL.md alone and held to the same vectors.
- * It stops the Web Crypto code and the vectors from drifting together, and it's the template for ports such as
- * client-python.
+ * It stops the Web Crypto code and the vectors from drifting together, and it's the template for porting the protocol
+ * to another language.
  */
 
 import { describe, expect, test } from 'bun:test'

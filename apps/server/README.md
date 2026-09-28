@@ -23,10 +23,10 @@ laplace-login-sync:
     - laplace-login-sync-vol:/app/data
 ```
 
-The server decrypts through `@laplace.live/login-sync`, taken from its source in `../packages/login-sync` rather than from npm, so the image builds from the repo root. To build it locally, run either of these from this directory:
+The server decrypts through `@laplace.live/login-sync`, taken from its source in `../../packages/login-sync` rather than from npm, so the image builds from the repo root. To build it locally, run either of these from this directory:
 
 ```bash
-docker buildx bake --allow=fs.read=..
+docker buildx bake --allow=fs.read=../..
 docker compose build
 ```
 

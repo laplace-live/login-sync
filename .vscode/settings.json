@@ -11,7 +11,16 @@
   "[typescriptreact]": {
     "editor.defaultFormatter": "biomejs.biome"
   },
+  "[javascript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
   "[json]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[jsonc]": {
     "editor.defaultFormatter": "biomejs.biome"
   },
   "[css]": {
@@ -28,5 +37,12 @@
     // https://www.tailwind-variants.org/docs/getting-started#intellisense-setup-optional
     "tv"
   ],
-  "js/ts.tsdk.path": "node_modules/typescript/lib"
+  "js/ts.tsdk.path": "node_modules/typescript/lib",
+  "files.exclude": {
+    "**/.DS_Store": true
+  },
+  // BuildKit's per-Dockerfile ignore file; without this, VS Code parses it as a Dockerfile and flags every line
+  "files.associations": {
+    "**/Dockerfile.dockerignore": "ignore"
+  }
 }

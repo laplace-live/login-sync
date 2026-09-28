@@ -46,8 +46,8 @@ function isLocalStorageData(value: unknown): value is LoginSyncPayload['local_st
 }
 
 /**
- * Checks the shape of a payload and fills in `local_storage_data`, which some writers (client-python's
- * `update_cookie`) omit. Fields it doesn't know pass through.
+ * Checks the shape of a payload and fills in `local_storage_data`, which blobs from older writers, such as the retired
+ * Python client, may lack. Fields it doesn't know pass through.
  */
 export function toPayload(value: unknown): LoginSyncPayload {
   if (!isRecord(value)) {
