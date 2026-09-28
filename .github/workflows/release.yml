@@ -15,21 +15,10 @@ jobs:
   release:
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: write
-      id-token: write
-      pull-requests: write
-
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-          # Authenticate git with a PAT so the tag push performed by
-          # changesets/action triggers downstream workflows (extension.yml).
-          # The default GITHUB_TOKEN cannot create recursive workflow runs,
-          # so tag pushes made with it are silently dropped. See:
-          # https://docs.github.com/en/actions/security-for-github-actions/security-guides/automatic-token-authentication#using-the-github_token-in-a-workflow
-          token: ${{ secrets.RELEASE_PAT }}
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -38,6 +27,25 @@ jobs:
       - run: bun install --frozen-lockfile
 
       - run: sudo npm install -g npm@latest
+
+      # Release writes (the version PR, tags and GitHub Releases) use a GitHub
+      # App token instead of `GITHUB_TOKEN`. Events caused by `GITHUB_TOKEN`
+      # don't trigger other workflows, so the release tags would never start
+      # extension.yml, and checks on the version PR would wait for manual
+      # approval.
+      #
+      # Requires the laplace-release-bot GitHub App installed on this repo with
+      # Contents and Pull requests read & write, its Client ID and private key
+      # stored in the `RELEASE_APP_CLIENT_ID` and `RELEASE_APP_PRIVATE_KEY` org
+      # secrets.
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ secrets.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
 
       - name: Create release PR or push tags
         uses: changesets/action@v2
@@ -50,9 +58,7 @@ jobs:
           create-github-releases: true
           commit-message: "chore: version packages"
           pr-title: "chore: version packages"
-          # Same PAT as the checkout step. Used by changesets/action for
-          # API calls (creating the version PR, GitHub releases) AND for the
-          # tag push, so the tag triggers downstream workflows. The token
-          # must be passed via this input: the action stopped reading the
-          # `GITHUB_TOKEN` env var in v2.
-          github-token: ${{ secrets.RELEASE_PAT }}
+          # Used for the version PR, tags and GitHub Releases, so the tags
+          # trigger extension.yml. v2 reads the token only from this input,
+          # not from the `GITHUB_TOKEN` env var.
+          github-token: ${{ steps.app-token.outputs.token }}
