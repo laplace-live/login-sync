@@ -148,6 +148,34 @@
       "password": "password12345",
       "blob": "{\"encrypted\":\"U2FsdGVkX19fhfCPlHeiFpiR2DprwTI195IRbx8zZEUAiScSZdhfArMCEDtxDAILc7ZJ4Vw9GttychuB20Qoa7AGFeYWYVNJJjPBytbBsCq7Y0OeSH89PvSmEkHU1fEV74iNMZD02KCgPwxVJODn/eg5/MBHM8hz3gIm197TWo6SjIqyfHkCDWxcg7A/oHeQj4MioJSE/+s2cXQTePNsvVkHSlMLCXjZxrW55I0tMW4WPtqRIyDVYGcstF0bkuzQibnI3nt9hKrC0p0YANv5qWG3457js2BwNen/wn51/u0=\"}",
       "code": "malformed"
+    },
+    {
+      "name": "v1 with only the header and salt",
+      "uuid": "uuid1234",
+      "password": "password12345",
+      "blob": "U2FsdGVkX18AAAAAAAAAAA==",
+      "code": "malformed"
+    },
+    {
+      "name": "v1 without the Salted__ magic",
+      "uuid": "uuid1234",
+      "password": "password12345",
+      "blob": "U2FsdGVkX1AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+      "code": "malformed"
+    },
+    {
+      "name": "v1 that decrypts to text that is not JSON",
+      "uuid": "uuid1234",
+      "password": "password12345",
+      "blob": "U2FsdGVkX18QERITFBUWF9Q0DS8hRzvGVKcgsRYdyV8=",
+      "code": "bad_credentials"
+    },
+    {
+      "name": "v2 that authenticates but is not UTF-8",
+      "uuid": "uuid1234",
+      "password": "password12345",
+      "blob": "v2:ICEiIyQlJicoKSorAUpabrr46PZPeFW/KNYHv2vtVwDPyyNfC/23gg1FBXVMXDY55oimN35zkRtZwKNFVKeoCLzJxT9/p4FqXLHGiDQjkYME",
+      "code": "malformed"
     }
   ]
 }

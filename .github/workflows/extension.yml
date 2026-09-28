@@ -15,6 +15,9 @@ on:
       - "apps/extension/**"
       # The extension bundles the SDK's source, and nothing else from the package
       - "packages/login-sync/src/**"
+      # Every workspace installs from the root manifest and lockfile
+      - "package.json"
+      - "bun.lock"
       - ".github/workflows/extension.yml"
   workflow_dispatch:
 

@@ -1,8 +1,14 @@
 import { afterAll, describe, expect, test } from 'bun:test'
-import { unlink } from 'node:fs/promises'
+import { mkdtemp, rmdir, unlink } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { encrypt, LoginSyncClient, SUPPORTED_VERSIONS } from '@laplace.live/login-sync'
 
-import app from './'
+// These tests write, overwrite and delete blobs, and the server's default data directory holds real ones. The server
+// reads the variable once, when it's imported, so it's set before the import
+const dataDir = await mkdtemp(join(tmpdir(), 'login-sync-test-'))
+process.env.LAPLACE_LOGIN_SYNC_DATA_DIR = dataDir
+const { default: app } = await import('./')
 
 describe('events', () => {
   test('should return the correct response', async () => {
@@ -15,7 +21,6 @@ describe('events', () => {
 describe('password routes', () => {
   // Private mode comes from the environment and Bun loads .env into tests, so send the key whenever one is set
   const auth = process.env.LAPLACE_LOGIN_SYNC_AUTH_KEY
-  const dataDir = `${import.meta.dir}/../data`
   const password = 'correct-horse-battery'
   const payload = {
     cookie_data: {
@@ -50,8 +55,10 @@ describe('password routes', () => {
     request('/remove', { method: 'POST', body: new URLSearchParams({ uuid, token }) })
 
   afterAll(async () => {
-    // These tests share the real data directory, so clear out whatever a failed run left behind
+    // Clear out whatever a failed run left behind, then the directory. Not recursively: if something unexpected is
+    // still in there, the empty-directory check keeps it
     await Promise.all(written.map(uuid => unlink(`${dataDir}/${uuid}.json`).catch(() => {})))
+    await rmdir(dataDir).catch(() => {})
   })
 
   test.each(versions)('v%d: store, read back with the password, refuse wrong ones, delete', async version => {

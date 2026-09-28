@@ -6,12 +6,20 @@ on:
       - "master"
     paths:
       - "packages/login-sync/**"
+      # The SDK's biome.jsonc extends the root one, and the install and toolchain come from the root lockfile
+      - "biome.jsonc"
+      - "package.json"
+      - "bun.lock"
       - ".github/workflows/sdk.yml"
   pull_request:
     branches:
       - "master"
     paths:
       - "packages/login-sync/**"
+      # The SDK's biome.jsonc extends the root one, and the install and toolchain come from the root lockfile
+      - "biome.jsonc"
+      - "package.json"
+      - "bun.lock"
       - ".github/workflows/sdk.yml"
   workflow_dispatch:
 

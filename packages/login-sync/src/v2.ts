@@ -6,7 +6,7 @@
 
 import type { Credentials } from './credentials.js'
 
-import { concat, fromBase64, strictUtf8, toBase64, utf8 } from './bytes.js'
+import { concat, fromBase64, strictUtf8, toBase64, toHex, utf8 } from './bytes.js'
 import { LoginSyncError } from './errors.js'
 
 export const V2_PREFIX = 'v2:'
@@ -22,12 +22,15 @@ const NONCE_BYTES = 12
 const TAG_BYTES = 16
 
 // Key derivation is the one expensive step, about 10 ms, and its result is fixed per token while readers decrypt the
-// same tokens over and over. Map order doubles as LRU order.
+// same tokens over and over. Map order doubles as LRU order. Entries are keyed by a digest of the token, not the
+// token: the cache also keeps every wrong guess, so a raw key would hold passwords, as large as callers send, in memory
 const KEY_CACHE_LIMIT = 256
 const keyCache = new Map<string, Promise<CryptoKey>>()
 
-function deriveV2Key({ uuid, password }: Credentials): Promise<CryptoKey> {
-  const id = JSON.stringify([uuid, password])
+async function deriveV2Key({ uuid, password }: Credentials): Promise<CryptoKey> {
+  // Nothing is awaited between the lookup and the `set` below, so concurrent calls for one token share a derivation
+  const digest = await crypto.subtle.digest('SHA-256', utf8.encode(JSON.stringify([uuid, password])))
+  const id = toHex(new Uint8Array(digest))
   const cached = keyCache.get(id)
   if (cached) {
     keyCache.delete(id)

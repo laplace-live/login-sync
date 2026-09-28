@@ -41,8 +41,14 @@ function isCookieData(value: unknown): value is LoginSyncPayload['cookie_data'] 
   return isRecord(value) && Object.values(value).every(cookies => Array.isArray(cookies) && cookies.every(isRecord))
 }
 
+// Unlike cookies, the values are checked: localStorage only holds strings, every writer has only ever sent strings, and
+// readers are handed them typed as strings
+function isStringMap(value: unknown): value is Record<string, string> {
+  return isRecord(value) && Object.values(value).every(item => typeof item === 'string')
+}
+
 function isLocalStorageData(value: unknown): value is LoginSyncPayload['local_storage_data'] {
-  return isRecord(value) && Object.values(value).every(isRecord)
+  return isRecord(value) && Object.values(value).every(isStringMap)
 }
 
 /**
@@ -59,7 +65,7 @@ export function toPayload(value: unknown): LoginSyncPayload {
   }
   const localStorageData = value.local_storage_data ?? {}
   if (!isLocalStorageData(localStorageData)) {
-    throw new LoginSyncError('malformed', '`local_storage_data` is not an object of objects')
+    throw new LoginSyncError('malformed', '`local_storage_data` is not an object of string maps')
   }
   return { ...value, cookie_data: cookieData, local_storage_data: localStorageData }
 }

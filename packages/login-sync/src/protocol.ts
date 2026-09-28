@@ -29,9 +29,9 @@ export async function encrypt(
   options: EncryptOptions
 ): Promise<string> {
   assertCredentials(credentials)
-  // Refuse to write what no reader would accept
-  toPayload(payload)
-  const json = JSON.stringify(payload)
+  // Refuse to write what no reader would accept, and write the checked copy: a missing or null `local_storage_data`
+  // goes out as `{}`, and a class instance's `toJSON` can't swap in something unchecked
+  const json = JSON.stringify(toPayload(payload))
   switch (options?.version) {
     case 1:
       return encryptV1(json, v1Passphrase(credentials))

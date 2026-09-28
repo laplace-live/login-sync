@@ -19,8 +19,9 @@ const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 8088
 const useAuth = process.env.LAPLACE_LOGIN_SYNC_AUTH_MODE
 const auth = process.env.LAPLACE_LOGIN_SYNC_AUTH_KEY
 
-// this code is inside ./src, so we need to go one level up to access the data folder
-const dataDir = `${import.meta.dir}/../data`
+// this code is inside ./src, so we need to go one level up to access the data folder. The tests point the variable at
+// a temporary directory, because they write and delete blobs
+const dataDir = process.env.LAPLACE_LOGIN_SYNC_DATA_DIR || `${import.meta.dir}/../data`
 
 const zStringNotEmpty = (msg?: string) =>
   z
@@ -33,6 +34,15 @@ const isValidUuid = (uuid: string) => /^[a-zA-Z0-9]+$/.test(uuid)
 
 const limiter = bodyLimit({
   maxSize: 4 * 1024 * 1024, // 4mb
+  onError: () => {
+    return new Response('Body too large 😅', { status: 413 })
+  },
+})
+
+// The password routes carry a uuid, a password and an auth key, well under 1 KB. Without a cap Bun accepts 128 MB, and
+// the SDK's v1 key derivation runs its pure-JS MD5 over the whole password on the event loop
+const passwordLimiter = bodyLimit({
+  maxSize: 16 * 1024,
   onError: () => {
     return new Response('Body too large 😅', { status: 413 })
   },
@@ -87,7 +97,7 @@ const removeSchema = z.object({
   token: z.string(),
 })
 
-app.post('/remove', zValidator('form', removeSchema), async c => {
+app.post('/remove', passwordLimiter, zValidator('form', removeSchema), async c => {
   const body = c.req.valid('form')
   const uuid = body.uuid
   const token = body.token
@@ -98,26 +108,33 @@ app.post('/remove', zValidator('form', removeSchema), async c => {
 
   try {
     const filePath = `${dataDir}/${uuid}.json`
+    const file = Bun.file(filePath)
 
-    if (!(await Bun.file(filePath).exists())) {
+    if (!(await file.exists())) {
       return c.json({ code: 403, message: 'Invalid credentials' }, 403)
-    } else {
-      const data = JSON.parse(await Bun.file(filePath).text())
-
-      if (!data) {
-        return c.json({ code: 500, message: 'Internal server error' }, 500)
-      } else {
-        try {
-          // Resolves only for a payload with `cookie_data`, the proof of the password this route requires
-          await decrypt(data.encrypted, { uuid, password: token })
-        } catch {
-          return c.json({ code: 403, message: 'Invalid credentials' })
-        }
-        await unlink(filePath)
-        return c.json({ code: 200, message: 'Done' })
-      }
     }
-  } catch {
+
+    const data = JSON.parse(await file.text())
+
+    if (!data) {
+      return c.json({ code: 500, message: 'Internal server error' }, 500)
+    }
+
+    try {
+      // Resolves only for a payload with `cookie_data`, the proof of the password this route requires
+      await decrypt(data.encrypted, { uuid, password: token })
+    } catch (error) {
+      // Only a token that can't open the blob is the caller's mistake. A blob this server can't read, such as one in a
+      // newer protocol version, falls through to the error below instead of telling its owner the token is wrong
+      if (isLoginSyncError(error, 'bad_credentials') || isLoginSyncError(error, 'invalid_token')) {
+        return c.json({ code: 403, message: 'Invalid credentials' })
+      }
+      throw error
+    }
+    await unlink(filePath)
+    return c.json({ code: 200, message: 'Done' })
+  } catch (error) {
+    console.error('Error removing credentials', error)
     return c.json({ code: 500, message: 'Error removing credentials' })
   }
 })
@@ -171,6 +188,7 @@ app.get(
 
 app.post(
   '/get/:uuid',
+  passwordLimiter,
   validator('json', (value, c) => {
     const parsed = z
       .object({
@@ -209,23 +227,22 @@ app.post(
     // This condition is requied because we need to validate `data` first to avoid malformed content
     if (!data) {
       return c.json({ code: 403, message: 'Invalid credentials' }, 403)
-    } else {
-      const password = form.password
+    }
 
-      if (password && password !== '') {
-        try {
-          const { payload } = await decrypt(data.encrypted, { uuid, password })
-          return c.json(payload)
-        } catch (error) {
-          // A wrong password is the caller's mistake, not a server error
-          if (isLoginSyncError(error, 'bad_credentials')) {
-            return c.json({ code: 403, message: 'Invalid credentials' }, 403)
-          }
-          throw error
-        }
-      } else {
-        return c.json(data)
+    const password = form.password
+    if (!password) {
+      return c.json(data)
+    }
+
+    try {
+      const { payload } = await decrypt(data.encrypted, { uuid, password })
+      return c.json(payload)
+    } catch (error) {
+      // A wrong password is the caller's mistake, not a server error
+      if (isLoginSyncError(error, 'bad_credentials')) {
+        return c.json({ code: 403, message: 'Invalid credentials' }, 403)
       }
+      throw error
     }
   }
 )

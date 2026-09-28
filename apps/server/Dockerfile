@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # https://bun.sh/guides/ecosystem/docker
 # use the official Bun image
 # see all versions at https://hub.docker.com/r/oven/bun/tags
@@ -14,15 +15,12 @@ FROM base AS install
 # A frozen install checks the root lockfile against every workspace manifest, so all of them come along, but
 # `--filter` installs only the server's dependencies. The hoisted linker lays those out as plain directories in the
 # root node_modules, which can then move into /app on their own. The tests need no devDependencies, so one production
-# install serves both stages, and the tests run against exactly what ships.
-COPY package.json bun.lock /temp/prod/
-COPY apps/extension/package.json /temp/prod/apps/extension/
-COPY apps/server/package.json /temp/prod/apps/server/
-COPY packages/login-sync/package.json /temp/prod/packages/login-sync/
+# install serves both stages, and the tests run against exactly what ships. The globs follow the root `workspaces`, so a
+# new workspace needs no edit here (--parents keeps each manifest's directory)
+COPY --parents package.json bun.lock apps/*/package.json packages/*/package.json /temp/prod/
 RUN cd /temp/prod && bun install --frozen-lockfile --linker hoisted --filter laplace-login-sync-server --production
 
-# copy node_modules from temp directory
-# then copy all (non-ignored) project files into the image
+# copy node_modules from the install stage, then the server and the SDK source it imports
 FROM base AS prerelease
 COPY --from=install /temp/prod/node_modules node_modules
 COPY apps/server/ .
@@ -31,10 +29,9 @@ COPY apps/server/ .
 # /packages/login-sync/src: the filesystem root is its own parent
 COPY packages/login-sync/src /packages/login-sync/src
 
-# [optional] tests & build
+# tests
 ENV NODE_ENV=production
 RUN bun test
-# RUN bun run build
 
 # copy production dependencies and source code into final image
 FROM base AS release
@@ -43,6 +40,9 @@ COPY --from=prerelease /app/src ./src
 # tsconfig.json carries the `paths` entry Bun resolves the SDK through at runtime
 COPY --from=prerelease /app/package.json /app/tsconfig.json ./
 COPY --from=prerelease /packages/login-sync/src /packages/login-sync/src
+# The tests ran in prerelease, which has everything, so resolve every import again here: a release stage missing
+# tsconfig.json or the SDK source then fails the build instead of the container at start
+RUN bun build src/index.ts --target bun > /dev/null
 
 # run the app
 USER bun

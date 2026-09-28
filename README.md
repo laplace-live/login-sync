@@ -20,6 +20,9 @@ bun install
 bun run --filter laplace-login-sync dev
 bun run --filter laplace-login-sync build
 bun run --filter laplace-login-sync zip
+
+# the Firefox build, into apps/extension/.output/firefox-mv2/
+bun run --filter laplace-login-sync build:firefox
 ```
 
 ## Working on the server

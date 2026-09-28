@@ -84,25 +84,27 @@ The extension has no test suite. Treat `compile` plus a manual popup pass as the
 
 ### The payload contract binds three clients
 
-One implementation of the format lives here, the SDK in `packages/login-sync/`, which the extension encrypts through and the server decrypts through. laplace-workers and laplace-cf-workers still carry their own copies until they adopt the SDK, and v1 has no version field and no negotiation, so **changing any of the following breaks those copies silently** — a mismatched key just yields garbage that fails `JSON.parse`:
+The SDK in `packages/login-sync/` implements the format; the extension encrypts through it and the server decrypts through it. Other copies remain: laplace-workers and laplace-cf-workers carry their own until they adopt the SDK, and the Playwright recipe in `examples/playwright/` still decrypts with crypto-js. v1 has no version field and no negotiation, so **changing any of the following breaks those copies silently** — a mismatched key just yields garbage that fails `JSON.parse`:
 
 - **Key derivation**: `MD5(uuid + '-' + password)` as a hex string, first 16 characters. That 16-char string is then the _passphrase_ (not the key) fed to EVP_BytesToKey below.
-- **Cipher**: `CryptoJS.AES.encrypt` defaults — OpenSSL `Salted__` envelope, EVP_BytesToKey with MD5 and 3 rounds, AES-256-CBC, PKCS7, base64. crypto-js itself is gone: the SDK's `v1.ts` builds the format on Web Crypto, with a hand-rolled MD5 because Web Crypto has none (its constant table is written out, not derived from `Math.sin`, whose precision engines don't guarantee).
+- **Cipher**: `CryptoJS.AES.encrypt` defaults — OpenSSL `Salted__` envelope, EVP_BytesToKey with MD5 and 3 rounds, AES-256-CBC, PKCS7, base64. crypto-js itself is gone from the extension, the server and the SDK: the SDK's `v1.ts` builds the format on Web Crypto, with a hand-rolled MD5 because Web Crypto has none (its constant table is written out, not derived from `Math.sin`, whose precision engines don't guarantee).
 - **Plaintext shape**: `{ cookie_data, local_storage_data }` — snake_case, and `/remove` uses the presence of `cookie_data` after decryption as proof the caller knows the password.
 - **Transport**: the SDK client's `push` gzips the JSON `{ uuid, encrypted }` with the built-in `CompressionStream` and POSTs it to `/update` as a raw body with `Content-Encoding: gzip`; the server decompresses every upload with `node:zlib`'s `unzipSync`, whatever that header says.
 
 `uuid` is not a UUID — it's a `short-uuid` token, validated as `/^[a-zA-Z0-9]+$/`. That regex is the path-traversal guard, because the token becomes the filename, and the SDK's client checks it too before the token becomes a URL path segment.
 
-**`packages/login-sync` is the versioned successor.** The extension writes through it, in v1 (`PAYLOAD_VERSION` in `lib/const.ts`), and the server reads through it, in either version. Its `PROTOCOL.md` specifies v1 (exactly the format above) and v2: PBKDF2-SHA256 over the full password with a uuid-bound salt, AES-256-GCM with the uuid as additional data, stored as `v2:` + base64(nonce ‖ ciphertext ‖ tag). Readers tell versions apart by prefix — `U2FsdGVkX1` is v1, `v2:` is v2 — so the SDK reads both. Nothing may write v2 until every other reader (laplace-workers, laplace-cf-workers) decrypts through the SDK or passes its `vectors.json`: detection lets a new reader open old blobs, never an old reader open new ones. Keep v2 at 100,000 PBKDF2 iterations or fewer — Cloudflare Workers rejects more in production only, and no local runtime reproduces it. `vectors.json` is frozen; add vectors, never edit them.
+**`packages/login-sync` is the versioned successor.** The extension writes through it, in v1 (`PAYLOAD_VERSION` in `lib/const.ts`), and the server reads through it, in either version. Its `PROTOCOL.md` specifies v1 (exactly the format above) and v2: PBKDF2-SHA256 over the full password with a uuid-bound salt, AES-256-GCM with the uuid as additional data, stored as `v2:` + base64(nonce ‖ ciphertext ‖ tag). Readers tell versions apart by prefix — `U2FsdGVkX1` is v1, `v2:` is v2 — so the SDK reads both. Nothing may write v2 until every other reader (laplace-workers, laplace-cf-workers, `examples/playwright/`) decrypts through the SDK or passes its `vectors.json`: detection lets a new reader open old blobs, never an old reader open new ones. Keep v2 at 100,000 PBKDF2 iterations or fewer — Cloudflare Workers rejects more in production only, and no local runtime reproduces it. `vectors.json` is frozen; add vectors, never edit them.
 
 ### Server: flat files, four routes, one module
 
-Everything lives in `apps/server/src/index.ts`; storage is `apps/server/data/<uuid>.json` holding `{ encrypted }` (gitignored, a Docker volume in production). No database.
+Everything lives in `apps/server/src/index.ts`; storage is `apps/server/data/<uuid>.json` holding `{ encrypted }` (gitignored, a Docker volume in production; `LAPLACE_LOGIN_SYNC_DATA_DIR` overrides the directory, and the tests point it at a temporary one). No database.
 
 - `POST /update` — 4 MB `bodyLimit`, writes the file and reads it back to confirm.
 - `GET /get/:uuid` — returns the ciphertext untouched, `Cache-Control: private, max-age=5`. Browsers honor that, so a read from a browser can be 5 s stale.
 - `POST /get/:uuid` — same, plus an optional `password` that makes the _server_ decrypt and return plaintext (a wrong one answers 403). Convenience for trusted callers; it means the password crosses the wire.
-- `POST /remove` — form-encoded `uuid` + `token`; deletes only if `token` decrypts the blob.
+- `POST /remove` — form-encoded `uuid` + `token`; deletes only if `token` decrypts the blob. A token that can't open it answers `{ code: 403 }`; a blob the server can't read at all, such as a newer protocol version, answers `{ code: 500 }`.
+
+Both password routes take at most 16 KB of body. Without that cap Bun accepts 128 MB, and the SDK's v1 key derivation would run its pure-JS MD5 over a password that size on the event loop.
 
 **Private mode** (this fork's addition) requires both `LAPLACE_LOGIN_SYNC_AUTH_MODE` and `LAPLACE_LOGIN_SYNC_AUTH_KEY`. The mode variable is checked for _presence_, not truthiness — setting it to `false` still enables auth. Comparison goes through `utils/timingSafeEqual.ts`. Note the gate covers only the two `/get` routes: `/update` and `/remove` stay open, since both already require knowing the password.
 

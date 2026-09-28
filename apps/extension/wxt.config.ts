@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'wxt'
 
@@ -10,6 +11,21 @@ export default defineConfig({
   // as `@laplace.live/login-sync/vectors.json` would break under it.
   alias: {
     '@laplace.live/login-sync': '../../packages/login-sync/src/index.ts',
+  },
+  zip: {
+    // AMO rebuilds the Firefox package from this sources zip, and the bundle includes the SDK from outside this
+    // directory, so zip from the repo root: the workspace manifests and lockfile, this app, and the SDK source it
+    // aliases. WXT uses the path as given, so it has to be absolute
+    sourcesRoot: fileURLToPath(new URL('../..', import.meta.url)),
+    includeSources: [
+      'package.json',
+      'bun.lock',
+      'README.md',
+      'apps/extension/**',
+      'apps/server/package.json',
+      'packages/login-sync/package.json',
+      'packages/login-sync/src/**',
+    ],
   },
   vite: () => ({
     plugins: [tailwindcss()],
