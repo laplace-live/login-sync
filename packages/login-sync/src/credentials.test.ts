@@ -10,8 +10,12 @@ describe('parseToken', () => {
     })
   })
 
-  test('ignores whitespace around a pasted token', () => {
-    expect(parseToken('  abc123@secret\n')).toEqual({ uuid: 'abc123', password: 'secret' })
+  test('ignores whitespace before the uuid', () => {
+    expect(parseToken('  abc123@secret')).toEqual({ uuid: 'abc123', password: 'secret' })
+  })
+
+  test('keeps trailing whitespace in the password', () => {
+    expect(parseToken('abc123@secret  ')).toEqual({ uuid: 'abc123', password: 'secret  ' })
   })
 
   test('keeps any later @ in the password', () => {

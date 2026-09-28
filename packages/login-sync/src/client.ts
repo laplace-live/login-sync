@@ -2,7 +2,7 @@ import type { Credentials } from './credentials.js'
 import type { LoginSyncPayload } from './payload.js'
 import type { DecryptResult, EncryptOptions } from './protocol.js'
 
-import { assertCredentials, UUID_PATTERN } from './credentials.js'
+import { assertCredentials } from './credentials.js'
 import { LoginSyncError } from './errors.js'
 import { isRecord } from './payload.js'
 import { decrypt, encrypt } from './protocol.js'
@@ -57,7 +57,7 @@ export class LoginSyncClient {
 
   /** Downloads the blob stored under these credentials and decrypts it. */
   async pull(credentials: Credentials, options?: RequestOptions): Promise<DecryptResult> {
-    assertRoutable(credentials)
+    assertCredentials(credentials)
     // A key rides in the body because a query string ends up in access logs and cache keys. Without one, a GET keeps
     // the read cacheable and spares browsers a CORS preflight
     const request: Outgoing = this.#authKey
@@ -91,7 +91,7 @@ export class LoginSyncClient {
     credentials: Credentials,
     options: EncryptOptions & RequestOptions
   ): Promise<void> {
-    assertRoutable(credentials)
+    assertCredentials(credentials)
     const encrypted = await encrypt(payload, credentials, options)
     const reply = await this.#send(
       '/update',
@@ -103,7 +103,7 @@ export class LoginSyncClient {
       },
       options
     )
-    if (isRecord(reply.body) && reply.body.action === 'done') return
+    if (reply.status === 200 && isRecord(reply.body) && reply.body.action === 'done') return
     throw serverError('the server did not store the blob', reply)
   }
 
@@ -112,7 +112,7 @@ export class LoginSyncClient {
    * and `push`, this sends the password.
    */
   async remove(credentials: Credentials, options?: RequestOptions): Promise<void> {
-    assertRoutable(credentials)
+    assertCredentials(credentials)
     const reply = await this.#send(
       '/remove',
       {
@@ -158,14 +158,6 @@ export class LoginSyncClient {
       body = undefined
     }
     return { status, body }
-  }
-}
-
-// The uuid becomes a path segment, so the server's pattern is also what keeps `/`, `?` and `..` out of the URL
-function assertRoutable(credentials: Credentials): void {
-  assertCredentials(credentials)
-  if (!UUID_PATTERN.test(credentials.uuid)) {
-    throw new LoginSyncError('invalid_token', 'uuid must be ASCII letters and digits')
   }
 }
 

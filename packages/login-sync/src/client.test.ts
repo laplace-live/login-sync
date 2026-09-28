@@ -80,6 +80,7 @@ describe('push', () => {
 
   test.each([
     ['a failed write', 200, { action: 'error' }],
+    ['a done body with a failing status', 502, { action: 'done' }],
     ['a rejected body', 400, { code: 400, message: 'Request body error' }],
     ['the body limit', 413, 'Body too large 😅'],
   ])('reports %s as server_error', async (_, status, body) => {

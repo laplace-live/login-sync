@@ -98,6 +98,15 @@ describe('failures', () => {
   test('empty credentials are rejected before any crypto runs', async () => {
     await expect(decrypt('v2:AAAA', { uuid: '', password: 'x' })).rejects.toHaveProperty('code', 'invalid_token')
   })
+
+  test('a uuid outside the server pattern is rejected before any crypto runs', async () => {
+    const uuid = 'abc-123'
+    await expect(encrypt(payload, { uuid, password: 'x' }, { version: 1 })).rejects.toHaveProperty(
+      'code',
+      'invalid_token'
+    )
+    await expect(decrypt('v2:AAAA', { uuid, password: 'x' })).rejects.toHaveProperty('code', 'invalid_token')
+  })
 })
 
 describe('encrypt', () => {
@@ -107,6 +116,13 @@ describe('encrypt', () => {
     expect(first).not.toBe(second)
     expect(detectVersion(first)).toBe(version)
     expect(await decrypt(first, credentials)).toEqual({ version, payload })
+  })
+
+  test('refuses a payload whose JSON a reader would reject', async () => {
+    // Only the top level is copied before serializing, so a cookie's own `toJSON` still decides what gets written
+    const cookies = payload.cookie_data['bilibili.com'].map(cookie => ({ ...cookie, toJSON: () => 'not a cookie' }))
+    const pending = encrypt({ ...payload, cookie_data: { 'bilibili.com': cookies } }, credentials, { version: 1 })
+    await expect(pending).rejects.toHaveProperty('code', 'malformed')
   })
 })
 
