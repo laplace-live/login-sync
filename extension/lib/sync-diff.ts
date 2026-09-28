@@ -11,7 +11,7 @@
  * just calls `fingerprintCookies` / `fingerprintLocalStorage` / `logPayloadDiff`.
  */
 
-import CryptoJS from 'crypto-js'
+import { sha256Hex } from './crypto'
 
 type Cookie = Browser.cookies.Cookie
 
@@ -80,8 +80,8 @@ interface LsDiff {
  * Short value-hash used to spot per-key changes without persisting raw cookie
  * values. 12 hex chars (~48 bits) is plenty for change-detection collisions.
  */
-function shortHash(value: string): string {
-  return CryptoJS.SHA256(value).toString().slice(0, 12)
+async function shortHash(value: string): Promise<string> {
+  return (await sha256Hex(value)).slice(0, 12)
 }
 
 /** Disambiguate cookies that share a name across paths (rare but legal). */
@@ -95,35 +95,35 @@ function cookieMetaSig(c: Cookie): string {
   return `${c.secure ? 1 : 0}|${c.httpOnly ? 1 : 0}|${c.sameSite ?? ''}|${c.session ? 1 : 0}`
 }
 
-function fingerprintCookieEntry(c: Cookie): CookieEntryFp {
-  const entry: CookieEntryFp = { v: shortHash(c.value ?? '') }
+async function fingerprintCookieEntry(c: Cookie): Promise<CookieEntryFp> {
+  const entry: CookieEntryFp = { v: await shortHash(c.value ?? '') }
   if (typeof c.expirationDate === 'number') entry.e = c.expirationDate
   // Default flags (all false / no sameSite) → omit `m` to keep storage tight.
   const meta = cookieMetaSig(c)
-  if (meta !== '0|0||0') entry.m = shortHash(meta)
+  if (meta !== '0|0||0') entry.m = await shortHash(meta)
   return entry
 }
 
-export function fingerprintCookies(cookies: Record<string, Cookie[]>): CookieFingerprint {
+export async function fingerprintCookies(cookies: Record<string, Cookie[]>): Promise<CookieFingerprint> {
   const fp: CookieFingerprint = {}
   for (const list of Object.values(cookies)) {
     for (const c of list) {
       const group = c.domain || '(no-domain)'
       if (!fp[group]) fp[group] = {}
-      fp[group][cookieEntryKey(c)] = fingerprintCookieEntry(c)
+      fp[group][cookieEntryKey(c)] = await fingerprintCookieEntry(c)
     }
   }
   return fp
 }
 
-export function fingerprintLocalStorage(ls: Record<string, Record<string, unknown>>): LsFingerprint {
+export async function fingerprintLocalStorage(ls: Record<string, Record<string, unknown>>): Promise<LsFingerprint> {
   const fp: LsFingerprint = {}
   for (const [storageKey, entries] of Object.entries(ls)) {
     fp[storageKey] = {}
     for (const [k, v] of Object.entries(entries)) {
       // JSON.stringify is stable enough for change-detection on the structured
       // values content scripts mirror into extension storage.
-      fp[storageKey][k] = shortHash(typeof v === 'string' ? v : JSON.stringify(v))
+      fp[storageKey][k] = await shortHash(typeof v === 'string' ? v : JSON.stringify(v))
     }
   }
   return fp

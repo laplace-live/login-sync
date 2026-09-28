@@ -1,5 +1,3 @@
-import CryptoJS from 'crypto-js'
-
 import type { ConfigProps, DomainConfig } from './types'
 
 import {
@@ -9,6 +7,7 @@ import {
   STORAGE_KEY_LS_PREFIX,
   SYNC_DEDUPE_WINDOW_MS,
 } from './const'
+import { encryptAes, md5Hex, sha256Hex } from './crypto'
 import { browserLoadAll, loadData, saveData } from './storage'
 import {
   type CookieFingerprint,
@@ -65,7 +64,7 @@ export async function uploadCookie(payload: ConfigProps): Promise<SyncResult> {
   })
 
   const endpoint = `${DEFAULT_SYNC_SERVER}/update`
-  const sha256 = CryptoJS.SHA256(`${payload.uuid}-${payload.password}-${endpoint}-${dataToEncrypt}`).toString()
+  const sha256 = await sha256Hex(`${payload.uuid}-${payload.password}-${endpoint}-${dataToEncrypt}`)
 
   console.log('[laplace] upload payload', {
     cookieDomains: Object.keys(cookies),
@@ -100,15 +99,15 @@ export async function uploadCookie(payload: ConfigProps): Promise<SyncResult> {
   //   1. SHA256 differs → real cookie/LS change (per-key diff is meaningful).
   //   2. SHA256 matches but the dedupe window expired → periodic re-upload.
   //   3. `forceUpdate` set → manual sync from popup, regardless of hash.
-  const cookieFp = fingerprintCookies(cookies)
-  const localStorageFp = fingerprintLocalStorage(localStorages)
+  const cookieFp = await fingerprintCookies(cookies)
+  const localStorageFp = await fingerprintLocalStorage(localStorages)
   logPayloadDiff(lastUploaded, { cookieFp, localStorageFp }, hashChanged, {
     prev: lastUploaded?.sha256,
     curr: sha256,
   })
 
-  const aesKey = CryptoJS.MD5(`${payload.uuid}-${payload.password}`).toString().substring(0, 16)
-  const encrypted = CryptoJS.AES.encrypt(dataToEncrypt, aesKey).toString()
+  const aesKey = md5Hex(`${payload.uuid}-${payload.password}`).substring(0, 16)
+  const encrypted = await encryptAes(dataToEncrypt, aesKey)
 
   try {
     showBadge('↑', 'green')

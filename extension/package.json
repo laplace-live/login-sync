@@ -21,7 +21,6 @@
     "@tabler/icons-react": "^3.48.0",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
-    "crypto-js": "^4.2.0",
     "radix-ui": "^1.6.7",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
@@ -31,7 +30,6 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
-    "@types/crypto-js": "^4.2.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@wxt-dev/auto-icons": "^1.1.2",

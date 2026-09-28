@@ -7,7 +7,7 @@ LAPLACE Login Sync browser extension
 - [WXT](https://wxt.dev/)
 - React
 - Tailwind CSS
-- crypto-js, sonner, Radix UI, Tabler Icons
+- sonner, Radix UI, Tabler Icons
 
 ## Develop
 

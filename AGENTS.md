@@ -13,7 +13,7 @@ Two shipped surfaces, released independently: `extension/` (WXT + React, publish
 ```
 extension/       the shipped extension, package `laplace-login-sync` — WXT, MV3 + Firefox MV2
   entrypoints/     background.ts (alarm loop + message handler) · content.ts (localStorage mirror) · popup/ (React)
-  lib/             sync.ts (the upload path) · sync-diff.ts (diff logging) · use-sync-config.ts · storage · const · types
+  lib/             sync.ts (the upload path) · crypto.ts (CryptoJS-compatible AES on Web Crypto) · sync-diff.ts (diff logging) · use-sync-config.ts · storage · const · types
   components/ui/   shadcn-style primitives — Radix + CVA + Tailwind v4
   public/_locales/ en + zh_CN messages.json, read via `browser.i18n`
 server/          the shipped server, package `laplace-login-sync-server` — Bun + Hono
@@ -77,8 +77,8 @@ The extension has no test suite. Treat `compile` plus a manual popup pass as the
 
 The extension, the server, and `client-python/` all implement the same format by hand, with no version field and no negotiation. **Changing any of the following breaks the other two silently** — a mismatched key just yields garbage that fails `JSON.parse`:
 
-- **Key derivation**: `MD5(uuid + '-' + password)` as a hex string, first 16 characters. That 16-char string is then the *passphrase* (not the key) handed to CryptoJS.
-- **Cipher**: `CryptoJS.AES.encrypt` defaults — OpenSSL `Salted__` envelope, EVP_BytesToKey with MD5 and 3 rounds, AES-256-CBC, PKCS7, base64. `server/src/lib/crypto.ts` reimplements exactly that on `node:crypto` (three MD5 rounds → key = hash0‖hash1, iv = hash2) because it is ~10× faster than CryptoJS; `client-python/PyCryptoJS.py` is the third copy.
+- **Key derivation**: `MD5(uuid + '-' + password)` as a hex string, first 16 characters. That 16-char string is then the *passphrase* (not the key) fed to EVP_BytesToKey below.
+- **Cipher**: `CryptoJS.AES.encrypt` defaults — OpenSSL `Salted__` envelope, EVP_BytesToKey with MD5 and 3 rounds, AES-256-CBC, PKCS7, base64. crypto-js itself is gone from both shipped surfaces, so each carries its own copy of the format: `extension/lib/crypto.ts` builds it on Web Crypto, with a hand-rolled MD5 because Web Crypto has none; `server/src/lib/crypto.ts` reimplements exactly that on `node:crypto` (three MD5 rounds → key = hash0‖hash1, iv = hash2) because it is ~10× faster than CryptoJS; `client-python/PyCryptoJS.py` is the third copy.
 - **Plaintext shape**: `{ cookie_data, local_storage_data }` — snake_case, and `/remove` uses the presence of `cookie_data` after decryption as proof the caller knows the password.
 - **Transport**: the extension gzips the JSON `{ uuid, encrypted }` with the built-in `CompressionStream` and POSTs it as a raw body with `Content-Encoding: gzip`; the server decompresses it with `node:zlib`'s `unzipSync`.
 
