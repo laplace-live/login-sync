@@ -13,21 +13,18 @@ WORKDIR /app
 FROM base AS install
 # A frozen install checks the root lockfile against every workspace manifest, so all of them come along, but
 # `--filter` installs only the server's dependencies. The hoisted linker lays those out as plain directories in the
-# root node_modules, which can then move into /app on their own.
-COPY package.json bun.lock /temp/dev/
-COPY apps/extension/package.json /temp/dev/apps/extension/
-COPY apps/server/package.json /temp/dev/apps/server/
-COPY packages/login-sync/package.json /temp/dev/packages/login-sync/
-RUN cp -r /temp/dev /temp/prod
-RUN cd /temp/dev && bun install --frozen-lockfile --linker hoisted --filter laplace-login-sync-server
-
-# install with --production (exclude devDependencies)
+# root node_modules, which can then move into /app on their own. The tests need no devDependencies, so one production
+# install serves both stages, and the tests run against exactly what ships.
+COPY package.json bun.lock /temp/prod/
+COPY apps/extension/package.json /temp/prod/apps/extension/
+COPY apps/server/package.json /temp/prod/apps/server/
+COPY packages/login-sync/package.json /temp/prod/packages/login-sync/
 RUN cd /temp/prod && bun install --frozen-lockfile --linker hoisted --filter laplace-login-sync-server --production
 
 # copy node_modules from temp directory
 # then copy all (non-ignored) project files into the image
 FROM base AS prerelease
-COPY --from=install /temp/dev/node_modules node_modules
+COPY --from=install /temp/prod/node_modules node_modules
 COPY apps/server/ .
 # The server stays at /app because its data directory resolves to /app/data, where deployments mount their volume.
 # tsconfig.json's `paths` looks for the SDK at ../../packages/login-sync/src, which from /app is

@@ -38,8 +38,9 @@ jobs:
         with:
           node-version: 24
 
+      # Without --filter, Bun installs every workspace, the extension and its postinstall included
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install --frozen-lockfile --filter @laplace.live/login-sync
 
       - name: Lint
         run: bunx biome ci .

@@ -26,7 +26,7 @@ const TAG_BYTES = 16
 const KEY_CACHE_LIMIT = 256
 const keyCache = new Map<string, Promise<CryptoKey>>()
 
-export function deriveV2Key({ uuid, password }: Credentials): Promise<CryptoKey> {
+function deriveV2Key({ uuid, password }: Credentials): Promise<CryptoKey> {
   const id = JSON.stringify([uuid, password])
   const cached = keyCache.get(id)
   if (cached) {

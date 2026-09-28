@@ -1,3 +1,4 @@
+import { formatToken } from '@laplace.live/login-sync'
 import { toast } from 'sonner'
 
 import { isAction } from '@/lib/types'
@@ -106,6 +107,8 @@ function App() {
     }
   }
 
+  const token = formatToken(config)
+
   return (
     <div className='w-lg overflow-x-hidden bg-white dark:bg-neutral-800' style={{ width: '360px' }}>
       <div className='space-y-2 p-3 text-line text-neutral-800 dark:text-neutral-200'>
@@ -149,18 +152,10 @@ function App() {
           <>
             <div className='flex flex-row items-center gap-1'>
               <div className='flex-1'>
-                <Input
-                  type='text'
-                  className='font-mono'
-                  placeholder='端对端用户密钥'
-                  value={`${config.uuid}@${config.password}`}
-                  readOnly
-                />
+                <Input type='text' className='font-mono' placeholder='端对端用户密钥' value={token} readOnly />
               </div>
               <div className='flex items-center gap-1'>
-                <Button onClick={() => copyToClipboard(`${config.uuid}@${config.password}`)}>
-                  {browser.i18n.getMessage('copyToken')}
-                </Button>
+                <Button onClick={() => copyToClipboard(token)}>{browser.i18n.getMessage('copyToken')}</Button>
 
                 <Button tint='accent' onClick={() => handleSave({ andSync: true })} disabled={isBusy}>
                   {browser.i18n.getMessage('saveAndSync')}

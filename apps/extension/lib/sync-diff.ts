@@ -11,6 +11,8 @@
  * just calls `fingerprintCookies` / `fingerprintLocalStorage` / `logPayloadDiff`.
  */
 
+import type { LoginSyncPayload } from '@laplace.live/login-sync'
+
 import { sha256Hex } from './crypto'
 
 type Cookie = Browser.cookies.Cookie
@@ -116,14 +118,12 @@ export async function fingerprintCookies(cookies: Record<string, Cookie[]>): Pro
   return fp
 }
 
-export async function fingerprintLocalStorage(ls: Record<string, Record<string, unknown>>): Promise<LsFingerprint> {
+export async function fingerprintLocalStorage(ls: LoginSyncPayload['local_storage_data']): Promise<LsFingerprint> {
   const fp: LsFingerprint = {}
   for (const [storageKey, entries] of Object.entries(ls)) {
     fp[storageKey] = {}
     for (const [k, v] of Object.entries(entries)) {
-      // JSON.stringify is stable enough for change-detection on the structured
-      // values content scripts mirror into extension storage.
-      fp[storageKey][k] = await shortHash(typeof v === 'string' ? v : JSON.stringify(v))
+      fp[storageKey][k] = await shortHash(v)
     }
   }
   return fp

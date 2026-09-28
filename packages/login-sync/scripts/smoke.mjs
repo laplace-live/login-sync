@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 
-import { decrypt, encrypt, parseToken } from '../dist/index.js'
+import { decrypt, encrypt, parseToken, SUPPORTED_VERSIONS } from '../dist/index.js'
 
 const vectors = JSON.parse(await readFile(new URL('../vectors.json', import.meta.url), 'utf8'))
 for (const vector of [...vectors.v1.payload, ...vectors.v2]) {
@@ -13,7 +13,7 @@ for (const vector of [...vectors.v1.payload, ...vectors.v2]) {
 
 const credentials = parseToken('smoke123@correct-horse')
 const payload = { cookie_data: { 'bilibili.com': [] }, local_storage_data: {} }
-for (const version of [1, 2]) {
+for (const version of SUPPORTED_VERSIONS) {
   const blob = await encrypt(payload, credentials, { version })
   assert.deepEqual(await decrypt(blob, credentials), { version, payload })
 }

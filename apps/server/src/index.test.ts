@@ -1,6 +1,6 @@
 import { afterAll, describe, expect, test } from 'bun:test'
 import { unlink } from 'node:fs/promises'
-import { encrypt, type ProtocolVersion } from '@laplace.live/login-sync'
+import { encrypt, SUPPORTED_VERSIONS } from '@laplace.live/login-sync'
 
 import app from './'
 
@@ -36,7 +36,7 @@ describe('password routes', () => {
     },
     local_storage_data: { 'laplace.live': { loginSyncOptionSendDanmaku: 'true' } },
   }
-  const versions: ProtocolVersion[] = [1, 2]
+  const versions = [...SUPPORTED_VERSIONS]
   const written: string[] = []
 
   const request = (path: string, init?: RequestInit) => app.fetch(new Request(`http://localhost${path}`, init))

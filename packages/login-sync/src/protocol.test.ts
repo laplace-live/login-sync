@@ -3,12 +3,11 @@ import { describe, expect, test } from 'bun:test'
 import type { LoginSyncPayload } from './index.js'
 
 import vectors from '../vectors.json' with { type: 'json' }
-import { fromBase64, toHex } from './bytes.js'
-import { decrypt, detectVersion, encrypt, isLoginSyncError, LoginSyncError, SUPPORTED_VERSIONS } from './index.js'
+import { fromBase64, toHex, utf8 } from './bytes.js'
+import { decrypt, detectVersion, encrypt, LoginSyncError, SUPPORTED_VERSIONS } from './index.js'
 import { decryptV1, encryptV1, v1Passphrase } from './v1.js'
 import { encryptV2, V2_ITERATIONS } from './v2.js'
 
-const utf8 = new TextEncoder()
 const fromHex = (text: string) => Uint8Array.from(text.match(/../g) ?? [], byte => Number.parseInt(byte, 16))
 
 const credentials = { uuid: 'sQ4b8nKx2PzT7wYc9dLmRe', password: 'Hj3Vn8Qw2Zr5Tk9Bx4Mc7p' }
@@ -31,15 +30,6 @@ const payload = {
   },
   local_storage_data: { 'laplace.live': { loginSyncOptionSendDanmaku: 'true' } },
 } satisfies LoginSyncPayload
-
-function rejection(promise: Promise<unknown>): Promise<unknown> {
-  return promise.then(
-    () => {
-      throw new Error('expected a rejection')
-    },
-    (error: unknown) => error
-  )
-}
 
 describe('v1: CryptoJS passphrase format', () => {
   test.each(vectors.v1.cipher)('decrypts crypto-js output: $name', async ({ passphrase, plaintext, blob }) => {
@@ -91,24 +81,22 @@ describe('v2: PBKDF2-SHA256 and AES-256-GCM', () => {
 
 describe('failures', () => {
   test.each(vectors.errors)('$name: $code', async vector => {
-    const error = await rejection(decrypt(vector.blob, vector))
-    expect(error).toBeInstanceOf(LoginSyncError)
-    const code: string | undefined = isLoginSyncError(error) ? error.code : undefined
-    expect(code).toBe(vector.code)
+    const pending = decrypt(vector.blob, vector)
+    await expect(pending).rejects.toBeInstanceOf(LoginSyncError)
+    await expect(pending).rejects.toHaveProperty('code', vector.code)
   })
 
   test('a wrong password never yields a v1 payload', async () => {
     // v1 has no integrity check, so this leans on PKCS#7, strict UTF-8 and JSON parsing together
     const blob = await encrypt(payload, credentials, { version: 1 })
     for (let i = 0; i < 500; i++) {
-      const error = await rejection(decrypt(blob, { ...credentials, password: `wrong-${i}` }))
-      expect(isLoginSyncError(error, 'bad_credentials')).toBe(true)
+      const pending = decrypt(blob, { ...credentials, password: `wrong-${i}` })
+      await expect(pending).rejects.toHaveProperty('code', 'bad_credentials')
     }
   })
 
   test('empty credentials are rejected before any crypto runs', async () => {
-    const error = await rejection(decrypt('v2:AAAA', { uuid: '', password: 'x' }))
-    expect(isLoginSyncError(error, 'invalid_token')).toBe(true)
+    await expect(decrypt('v2:AAAA', { uuid: '', password: 'x' })).rejects.toHaveProperty('code', 'invalid_token')
   })
 })
 

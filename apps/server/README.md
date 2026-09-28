@@ -1,15 +1,15 @@
 # laplace-login-sync-server
 
-To install dependencies:
+To install dependencies, from the repo root:
 
 ```bash
 bun install
 ```
 
-To run:
+To run, from this directory:
 
 ```bash
-bun run index.js
+bun run dev
 ```
 
 ## Container
