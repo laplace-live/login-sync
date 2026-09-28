@@ -1,4 +1,3 @@
-import CryptoJS from 'crypto-js'
 import { Bench } from 'tinybench'
 
 import { cryptoHash, cryptoHmac, decryptAes, encryptAes, hashEncode, hashToString } from './lib/crypto'
@@ -17,20 +16,8 @@ const strToEncrypt = JSON.stringify({
   },
 })
 
-const cryptojsMd5Str = CryptoJS.MD5(keyStr).toString().substring(0, 16)
-console.log(`cryptojsMd5Str`, cryptojsMd5Str)
-
-const cryptojsSha1Str = CryptoJS.SHA1(keyStr).toString().substring(0, 16)
-console.log(`\ncryptojsSha1Str`, cryptojsSha1Str)
-
-const cryptojsAesStr = CryptoJS.AES.encrypt(strToEncrypt, cryptojsMd5Str).toString()
-console.log(`\ncryptojsAesStr`, cryptojsAesStr)
-
-const cryptojsAesStrDecrypted = CryptoJS.AES.decrypt(cryptojsAesStr, cryptojsMd5Str).toString(CryptoJS.enc.Utf8)
-console.log(`\ncryptojsAesStrDecrypted`, cryptojsAesStrDecrypted)
-
 const apiSha1Str = hashToString(await hashEncode(keyStr, 'SHA-256'))
-console.log(`\napiSha1Str`, apiSha1Str)
+console.log(`apiSha1Str`, apiSha1Str)
 
 const apiAesStr = encryptAes(strToEncrypt, keyStr)
 console.log(`\napiAesStr`, apiAesStr)
@@ -58,21 +45,6 @@ bench
   })
   .add('bun-sha256', async () => {
     cryptoHash(strToEncrypt, { algorithm: 'sha256' })
-  })
-  .add('cryptojs-md5', async () => {
-    CryptoJS.MD5(strToEncrypt).toString()
-  })
-  .add('cryptojs-sha1', async () => {
-    CryptoJS.SHA1(strToEncrypt).toString()
-  })
-  .add('cryptojs-sha256', async () => {
-    CryptoJS.SHA256(strToEncrypt).toString()
-  })
-  .add('cryptojs-encrypt-aes', async () => {
-    CryptoJS.AES.encrypt(strToEncrypt, cryptojsMd5Str).toString()
-  })
-  .add('cryptojs-decrypt-aes', async () => {
-    CryptoJS.AES.decrypt(cryptojsAesStr, cryptojsMd5Str).toString(CryptoJS.enc.Utf8)
   })
   .add('crypto-sha1', async () => {
     hashToString(await hashEncode(strToEncrypt, 'SHA-1'))

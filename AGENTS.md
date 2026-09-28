@@ -43,9 +43,9 @@ bun run --filter laplace-login-sync compile      # tsc --noEmit — the only typ
 # server — from server/
 bun install
 bun run dev      # bun --hot src/index.ts, port 8088 (PORT overrides)
-bun test         # src/index.test.ts
+bun test         # src/index.test.ts  ·  src/lib/crypto.test.ts  pinned CryptoJS vectors ↔ lib/crypto.ts
 bun run start    # what the container runs
-bun run src/bench.ts   # crypto benchmarks  ·  bun run src/aes.ts  round-trips CryptoJS ↔ lib/crypto.ts
+bun run src/bench.ts   # crypto benchmarks
 
 # either project, run from inside it — Biome is a local dep with no npm script
 bunx biome check .          # lint + format + import sort
@@ -65,7 +65,7 @@ Match the gate to the surface you touched.
 | any extension source                  | `bun run --filter laplace-login-sync compile`                            |
 | extension UI or sync behavior         | `dev`, then exercise the popup in a real browser — nothing is unit-tested |
 | any server source                     | `bun test` in `server/`                                                   |
-| the crypto or payload path either side | round-trip against the other side (`bun run src/aes.ts`, or a real sync)  |
+| the crypto or payload path either side | round-trip against the other side (`bun test` in `server/`, or a real sync) |
 | any file                              | `bunx biome check .` inside that subproject                              |
 | user-facing extension behavior        | `bunx changeset` in the same commit                                      |
 

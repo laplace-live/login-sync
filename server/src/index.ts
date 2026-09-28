@@ -233,7 +233,6 @@ app.onError((err, c) => {
 
 function cookieCloudDecrypt(uuid: string, encrypted: string, password: string) {
   const key = cryptoHash(`${uuid}-${password}`, { algorithm: 'md5' }).substring(0, 16)
-  // const decrypted = CryptoJS.AES.decrypt(encrypted, key).toString(CryptoJS.enc.Utf8)
   const decrypted = decryptAes(encrypted, key)
   const parsed = JSON.parse(decrypted)
   return parsed
