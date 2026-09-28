@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 LAPLACE Login Sync is a fork of [CookieCloud](https://github.com/easychen/CookieCloud): a browser extension encrypts the user's cookies (plus a narrow slice of localStorage) in the browser and uploads the ciphertext to a sync server, so a login session can be replayed on another machine or by a headless client. The server never holds the key — it stores one opaque AES blob per token id and hands it back on request.
 
-Two shipped surfaces, released independently: `extension/` (WXT + React, published to the Chrome, Edge, and Firefox stores) and `server/` (Bun + Hono, published as a GHCR container). `extension-v1/` (Plasmo) and `server-express/` (Express) are the superseded implementations — reference only, kept because Dependabot still bumps them.
+Two shipped surfaces, released independently: `extension/` (WXT + React, published to the Chrome, Edge, and Firefox stores) and `server/` (Bun + Hono, published as a GHCR container). `server-express/` (Express) is the superseded server — reference only, kept because Dependabot still bumps it.
 
 ## Repository layout
 
@@ -21,7 +21,6 @@ server/          the shipped server, package `laplace-login-sync-server` — Bun
 client-python/   standalone Python reader for the same encrypted payload
 examples/        Playwright recipe for consuming a synced session
 benchmarks/      hono vs express throughput comparison (node + pnpm, outside the build)
-extension-v1/    legacy Plasmo extension. All users already migrated to the new extension — reference only, do not develop
 server-express/  legacy Express server. No longer deployed — reference only, do not develop
 ```
 
