@@ -1,13 +1,13 @@
 import { unlink } from 'node:fs/promises'
 import { unzipSync } from 'node:zlib'
 import { zValidator } from '@hono/zod-validator'
+import { decrypt, isLoginSyncError } from '@laplace.live/login-sync'
 import { Hono } from 'hono'
 import { bodyLimit } from 'hono/body-limit'
 import { cors } from 'hono/cors'
 import { validator } from 'hono/validator'
 import { z } from 'zod'
 
-import { cryptoHash, decryptAes } from './lib/crypto'
 import { timingSafeEqual } from './utils/timingSafeEqual'
 
 interface CookieRequestBody {
@@ -108,17 +108,13 @@ app.post('/remove', zValidator('form', removeSchema), async c => {
         return c.json({ code: 500, message: 'Internal server error' }, 500)
       } else {
         try {
-          const parsed = cookieCloudDecrypt(uuid, data.encrypted, token)
-
-          if (typeof parsed === 'object' && 'cookie_data' in parsed) {
-            await unlink(filePath)
-            return c.json({ code: 200, message: 'Done' })
-          } else {
-            return c.json({ code: 403, message: 'Invalid credentials' })
-          }
+          // Resolves only for a payload with `cookie_data`, the proof of the password this route requires
+          await decrypt(data.encrypted, { uuid, password: token })
         } catch {
           return c.json({ code: 403, message: 'Invalid credentials' })
         }
+        await unlink(filePath)
+        return c.json({ code: 200, message: 'Done' })
       }
     }
   } catch {
@@ -217,8 +213,16 @@ app.post(
       const password = form.password
 
       if (password && password !== '') {
-        const parsed = cookieCloudDecrypt(uuid, data.encrypted, password)
-        return c.json(parsed)
+        try {
+          const { payload } = await decrypt(data.encrypted, { uuid, password })
+          return c.json(payload)
+        } catch (error) {
+          // A wrong password is the caller's mistake, not a server error
+          if (isLoginSyncError(error, 'bad_credentials')) {
+            return c.json({ code: 403, message: 'Invalid credentials' }, 403)
+          }
+          throw error
+        }
       } else {
         return c.json(data)
       }
@@ -230,13 +234,6 @@ app.onError((err, c) => {
   console.error('Server error', err)
   return c.json({ code: 500, message: 'Server error' }, 500)
 })
-
-function cookieCloudDecrypt(uuid: string, encrypted: string, password: string) {
-  const key = cryptoHash(`${uuid}-${password}`, { algorithm: 'md5' }).substring(0, 16)
-  const decrypted = decryptAes(encrypted, key)
-  const parsed = JSON.parse(decrypted)
-  return parsed
-}
 
 export default {
   port,

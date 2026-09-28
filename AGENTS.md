@@ -17,7 +17,7 @@ extension/       the shipped extension, package `laplace-login-sync` — WXT, MV
   components/ui/   shadcn-style primitives — Radix + CVA + Tailwind v4
   public/_locales/ en + zh_CN messages.json, read via `browser.i18n`
 server/          the shipped server, package `laplace-login-sync-server` — Bun + Hono
-  src/index.ts     every route lives here · lib/crypto.ts (CryptoJS-compatible AES) · utils/timingSafeEqual.ts
+  src/index.ts     every route lives here, decrypting through the SDK · utils/timingSafeEqual.ts
 packages/login-sync/  the payload protocol SDK, package `@laplace.live/login-sync` — Web Crypto only, no dependencies
   src/             protocol.ts (encrypt/decrypt) · detect.ts (version from the blob prefix) · v1.ts · v2.ts · credentials.ts · payload.ts
   PROTOCOL.md      the spec · vectors.json frozen known-answer vectors every implementation must pass
@@ -25,7 +25,7 @@ client-python/   standalone Python reader for the same encrypted payload
 examples/        Playwright recipe for consuming a synced session
 ```
 
-Runtime is **Bun** everywhere. Each subproject installs and runs on its own: only `extension/` and `packages/login-sync/` are root workspaces, so `bun install` at the root covers both, while `server/` keeps its own `bun.lock` and needs its own install. There is no shared build and no root lint script. The one cross-project dependency is the extension importing the SDK (`workspace:*`), and it bundles the SDK's TypeScript source rather than its `dist/`: an `alias` in `wxt.config.ts` points `@laplace.live/login-sync` at `packages/login-sync/src/index.ts`, and WXT applies it to both Vite and the generated `.wxt/tsconfig.json`, so the SDK never needs building first. `compile` sees the alias only after `.wxt/` is regenerated (`bun install` runs `wxt prepare`, and `dev` and `build` regenerate it too); until then `tsc` falls back to the SDK's `dist/`, checking against a possibly stale build, or fails if there is none. Keep the SDK's own exports map `dist/`-only: a custom export condition could do the same job, but it would publish a pointer to `src/`, which isn't in the tarball. Everything else couples only through the wire format described under [Architecture](#architecture).
+Runtime is **Bun** everywhere. Each subproject installs and runs on its own: only `extension/` and `packages/login-sync/` are root workspaces, so `bun install` at the root covers both, while `server/` keeps its own `bun.lock` and needs its own install. There is no shared build and no root lint script. Two subprojects import the SDK. The extension (`workspace:*`) bundles the SDK's TypeScript source rather than its `dist/`: an `alias` in `wxt.config.ts` points `@laplace.live/login-sync` at `packages/login-sync/src/index.ts`, and WXT applies it to both Vite and the generated `.wxt/tsconfig.json`, so the SDK never needs building first. `compile` sees the alias only after `.wxt/` is regenerated (`bun install` runs `wxt prepare`, and `dev` and `build` regenerate it too); until then `tsc` falls back to the SDK's `dist/`, checking against a possibly stale build, or fails if there is none. Keep the SDK's own exports map `dist/`-only: a custom export condition could do the same job, but it would publish a pointer to `src/`, which isn't in the tarball. The server runs the SDK source too without joining the workspace: a `paths` entry in `server/tsconfig.json` maps `@laplace.live/login-sync` to `../packages/login-sync/src/index.ts`, and Bun honors `paths` at runtime, so the server keeps its own `bun.lock` and its image carries the SDK source (see `docker.yml` under [Releases](#releases)). Everything else couples only through the wire format described under [Architecture](#architecture).
 
 Open `laplace-login-sync.code-workspace` in VS Code rather than the plain folder: each subproject has to be its own workspace root for the Biome extension to find the local `biome.jsonc` and binary (the repo root has neither).
 
@@ -43,10 +43,10 @@ bun run --filter laplace-login-sync compile      # tsc --noEmit — the only typ
 # server — from server/
 bun install
 bun run dev      # bun --hot src/index.ts, port 8088 (PORT overrides)
-bun test         # src/index.test.ts  ·  src/lib/crypto.test.ts  pinned CryptoJS vectors ↔ lib/crypto.ts
+bun test         # src/index.test.ts: every password route against v1 and v2 blobs  ·  utils/timingSafeEqual.test.ts
 bun run start    # what the container runs
-bun run src/bench.ts        # crypto benchmarks
 bun run src/bench-http.ts   # request throughput against a running `bun run dev`
+docker buildx bake --allow=fs.read=..   # the image, built from the repo root (see docker.yml under Releases)
 
 # sdk — from packages/login-sync/
 bun test          # vectors.json both ways, every error code, and a node:crypto reference reader
@@ -73,7 +73,7 @@ Match the gate to the surface you touched.
 | extension UI or sync behavior          | `dev`, then exercise the popup in a real browser — nothing is unit-tested                                                                          |
 | any server source                      | `bun test` in `server/`                                                                                                                            |
 | the crypto or payload path either side | round-trip against the other side (`bun test` in `server/`, or a real sync)                                                                        |
-| the SDK                                | `bun test`, `compile`, `build` and `smoke` in `packages/login-sync/`, the extension's `compile` (it builds from SDK source), plus `bunx changeset` |
+| the SDK                                | `bun test`, `compile`, `build` and `smoke` in `packages/login-sync/`, the extension's `compile` and `bun test` in `server/` (both run SDK source), plus `bunx changeset` |
 | any file                               | `bunx biome check .` inside that subproject                                                                                                        |
 | user-facing extension behavior         | `bunx changeset` in the same commit                                                                                                                |
 
@@ -83,16 +83,16 @@ The extension has no test suite. Treat `compile` plus a manual popup pass as the
 
 ### The payload contract binds three clients
 
-Three implementations of one format, with no version field and no negotiation: the SDK in `packages/login-sync/` (which the extension encrypts through), the server, and `client-python/`. **Changing any of the following breaks the others silently** — a mismatched key just yields garbage that fails `JSON.parse`:
+Two implementations of one format live here, with no version field and no negotiation: the SDK in `packages/login-sync/` (which the extension encrypts through and the server decrypts through) and `client-python/`, plus the copies in laplace-workers and laplace-cf-workers until they adopt the SDK. **Changing any of the following breaks the others silently** — a mismatched key just yields garbage that fails `JSON.parse`:
 
 - **Key derivation**: `MD5(uuid + '-' + password)` as a hex string, first 16 characters. That 16-char string is then the _passphrase_ (not the key) fed to EVP_BytesToKey below.
-- **Cipher**: `CryptoJS.AES.encrypt` defaults — OpenSSL `Salted__` envelope, EVP_BytesToKey with MD5 and 3 rounds, AES-256-CBC, PKCS7, base64. crypto-js itself is gone, so each implementation carries its own copy of the format: the SDK's `v1.ts` builds it on Web Crypto, with a hand-rolled MD5 because Web Crypto has none (its constant table is written out, not derived from `Math.sin`, whose precision engines don't guarantee); `server/src/lib/crypto.ts` reimplements exactly that on `node:crypto` (three MD5 rounds → key = hash0‖hash1, iv = hash2) because it is ~10× faster than CryptoJS; `client-python/PyCryptoJS.py` is the third copy.
+- **Cipher**: `CryptoJS.AES.encrypt` defaults — OpenSSL `Salted__` envelope, EVP_BytesToKey with MD5 and 3 rounds, AES-256-CBC, PKCS7, base64. crypto-js itself is gone, so each implementation carries its own copy of the format: the SDK's `v1.ts` builds it on Web Crypto, with a hand-rolled MD5 because Web Crypto has none (its constant table is written out, not derived from `Math.sin`, whose precision engines don't guarantee); `client-python/PyCryptoJS.py` is the other copy.
 - **Plaintext shape**: `{ cookie_data, local_storage_data }` — snake_case, and `/remove` uses the presence of `cookie_data` after decryption as proof the caller knows the password.
 - **Transport**: the extension gzips the JSON `{ uuid, encrypted }` with the built-in `CompressionStream` and POSTs it as a raw body with `Content-Encoding: gzip`; the server decompresses it with `node:zlib`'s `unzipSync`.
 
 `uuid` is not a UUID — it's a `short-uuid` token, validated as `/^[a-zA-Z0-9]+$/`. That regex is the path-traversal guard, because the token becomes the filename.
 
-**`packages/login-sync` is the versioned successor; so far only the extension uses it,** writing v1 (`PAYLOAD_VERSION` in `lib/const.ts`). Its `PROTOCOL.md` specifies v1 (exactly the format above) and v2: PBKDF2-SHA256 over the full password with a uuid-bound salt, AES-256-GCM with the uuid as additional data, stored as `v2:` + base64(nonce ‖ ciphertext ‖ tag). Readers tell versions apart by prefix — `U2FsdGVkX1` is v1, `v2:` is v2 — so the SDK reads both. Nothing may write v2 until every reader (this server, laplace-workers, laplace-cf-workers, `client-python/`) decrypts through the SDK or passes its `vectors.json`: detection lets a new reader open old blobs, never an old reader open new ones. Keep v2 at 100,000 PBKDF2 iterations or fewer — Cloudflare Workers rejects more in production only, and no local runtime reproduces it. `vectors.json` is frozen; add vectors, never edit them.
+**`packages/login-sync` is the versioned successor.** The extension writes through it, in v1 (`PAYLOAD_VERSION` in `lib/const.ts`), and the server reads through it, in either version. Its `PROTOCOL.md` specifies v1 (exactly the format above) and v2: PBKDF2-SHA256 over the full password with a uuid-bound salt, AES-256-GCM with the uuid as additional data, stored as `v2:` + base64(nonce ‖ ciphertext ‖ tag). Readers tell versions apart by prefix — `U2FsdGVkX1` is v1, `v2:` is v2 — so the SDK reads both. Nothing may write v2 until every other reader (laplace-workers, laplace-cf-workers, `client-python/`) decrypts through the SDK or passes its `vectors.json`: detection lets a new reader open old blobs, never an old reader open new ones. Keep v2 at 100,000 PBKDF2 iterations or fewer — Cloudflare Workers rejects more in production only, and no local runtime reproduces it. `vectors.json` is frozen; add vectors, never edit them.
 
 ### Server: flat files, four routes, one module
 
@@ -100,7 +100,7 @@ Everything lives in `server/src/index.ts`; storage is `server/data/<uuid>.json` 
 
 - `POST /update` — 4 MB `bodyLimit`, writes the file and reads it back to confirm.
 - `GET /get/:uuid` — returns the ciphertext untouched, `Cache-Control: private, max-age=5`.
-- `POST /get/:uuid` — same, plus an optional `password` that makes the _server_ decrypt and return plaintext. Convenience for trusted callers; it means the password crosses the wire.
+- `POST /get/:uuid` — same, plus an optional `password` that makes the _server_ decrypt and return plaintext (a wrong one answers 403). Convenience for trusted callers; it means the password crosses the wire.
 - `POST /remove` — form-encoded `uuid` + `token`; deletes only if `token` decrypts the blob.
 
 **Private mode** (this fork's addition) requires both `LAPLACE_LOGIN_SYNC_AUTH_MODE` and `LAPLACE_LOGIN_SYNC_AUTH_KEY`. The mode variable is checked for _presence_, not truthiness — setting it to `false` still enables auth. Comparison goes through `utils/timingSafeEqual.ts`. Note the gate covers only the two `/get` routes: `/update` and `/remove` stay open, since both already require knowing the password.
@@ -129,7 +129,7 @@ localStorage can't be read from the background, so `content.ts` mirrors each hos
 
 ## Conventions
 
-- **Bun, not Node.** `bun <file>`, `bun test`, `bun install`, `bun run <script>`, `bunx <pkg>`. Prefer `Bun.file`/`Bun.write` over `node:fs`, `Bun.$` over execa, `bun:sqlite`/`Bun.redis`/`Bun.sql` over their npm equivalents. `.env` loads automatically — never add `dotenv`. `node:crypto` is a deliberate exception in `server/src/lib/crypto.ts` (CryptoJS byte-compatibility). The SDK is the opposite exception: its `src/` must stay web-platform only (no `Buffer`, no `node:*`, no `Bun.*`) so it runs in the extension and on Cloudflare Workers, and `tsconfig.build.json` fails the build if it doesn't. Only its tests may use Node APIs.
+- **Bun, not Node.** `bun <file>`, `bun test`, `bun install`, `bun run <script>`, `bunx <pkg>`. Prefer `Bun.file`/`Bun.write` over `node:fs`, `Bun.$` over execa, `bun:sqlite`/`Bun.redis`/`Bun.sql` over their npm equivalents. `.env` loads automatically — never add `dotenv`. The SDK is an exception in the other direction: its `src/` must stay web-platform only (no `Buffer`, no `node:*`, no `Bun.*`) so it runs in the extension and on Cloudflare Workers, and `tsconfig.build.json` fails the build if it doesn't. Only its tests may use Node APIs.
 - **Biome is the only linter and formatter** — no ESLint, no Prettier. Single quotes, no semicolons, 120 columns, 2-space, `arrowParentheses: asNeeded`, ES5 trailing commas. Import grouping is configured in each `biome.jsonc`; run the assist instead of hand-sorting. The extension config inherits `next`/`react` domains from a shared template — its Next.js rules are inert here, don't read them as signal.
 - **Every user-facing extension change, and every SDK change, ships with a changeset in the same commit.** Changesets version the two workspace packages, the extension and the SDK; the server ships continuously from `master` and its `package.json` version is bumped by hand. Never hand-edit a changesets-managed `CHANGELOG.md`.
 - **Conventional commits** — `feat:`, `fix:`, `chore(deps):`.
@@ -142,7 +142,7 @@ Four workflows; the first three are chained by tags:
 
 - `release.yml` — changesets on every `master` push, opening or updating the "Version Packages" PR. Merging it pushes tag `laplace-login-sync@<version>` with a laplace-release-bot GitHub App token; the default `GITHUB_TOKEN` cannot trigger downstream workflows, so a tag pushed with it would go nowhere. The same `changeset publish` publishes `@laplace.live/login-sync` to npm through trusted publishing (OIDC via `id-token: write`, which needs Node ≥ 22.14 and npm ≥ 11.5.1, hence `setup-node`). Its tags, `@laplace.live/login-sync@<version>`, match no other workflow.
 - `extension.yml` — builds both zips on `master` and on PRs touching `extension/`. On a `laplace-login-sync@*` tag it also runs `wxt submit` to Chrome, Edge, and Firefox and attaches the zips to the GitHub Release. The artifact upload needs `include-hidden-files: true` because WXT writes to `.output/`.
-- `docker.yml` — buildx bake to `ghcr.io/laplace-live/login-sync-server` on `master` and `v*` tags.
+- `docker.yml` — buildx bake to `ghcr.io/laplace-live/login-sync-server` on `master` and `v*` tags. The build context is the repo root, not `server/`, because the image carries the SDK source: `docker-bake.hcl` sets `context = ".."`, which Bake only reads with the `allow: fs.read=..` entitlement, and `server/Dockerfile.dockerignore` trims the context to `server/` and `packages/login-sync/src`. In the image the server stays at `/app`, so its data directory is still `/app/data`, where deployments mount their volume, and the SDK sits at `/packages/login-sync/src`, the same relative spot `tsconfig.json`'s `paths` expects.
 - `sdk.yml` — lint, typecheck, tests, build, and a Node smoke run of `dist/` on pushes and PRs touching `packages/login-sync/`.
 
 The Firefox add-on id in `wxt.config.ts` is pinned to the existing AMO listing — changing it orphans every installed user. The `data_collection_permissions: ['authenticationInfo']` next to it is mandatory for AMO submissions from 2025-11-03 onward.

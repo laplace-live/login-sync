@@ -2,7 +2,10 @@ version: '3'
 
 services:
   laplace-login-sync-server:
-    build: .
+    # The server imports the SDK from ../packages/login-sync, so the image builds from the repo root
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
     env_file: ./.env
     volumes:
       - ./data:/app/data

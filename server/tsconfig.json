@@ -28,6 +28,12 @@
     "noPropertyAccessFromIndexSignature": false,
 
     // hono customs
-    "jsxImportSource": "hono/jsx"
+    "jsxImportSource": "hono/jsx",
+
+    // The SDK comes from its source in this repo, not from npm. Bun honors `paths` at runtime, and the Dockerfile copies
+    // the source to the same relative spot, so this resolves in the image as well
+    "paths": {
+      "@laplace.live/login-sync": ["../packages/login-sync/src/index.ts"]
+    }
   }
 }

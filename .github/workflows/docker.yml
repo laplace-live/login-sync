@@ -73,6 +73,9 @@ jobs:
           files: |
             ./docker-bake.hcl
             ${{ steps.meta.outputs.bake-file }}
+          # The build context is the repo root (`context = ".."` in docker-bake.hcl), because the server imports the
+          # SDK source from packages/login-sync; Bake refuses to read outside server/ without this entitlement
+          allow: fs.read=..
           targets: build-all
           push: ${{ github.event_name != 'pull_request' }}
           set: |
