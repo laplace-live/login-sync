@@ -14,16 +14,8 @@
       "path": "server"
     },
     {
-      "name": "server-express (legacy)",
-      "path": "server-express"
-    },
-    {
       "name": "client-python",
       "path": "client-python"
-    },
-    {
-      "name": "benchmarks",
-      "path": "benchmarks"
     },
     {
       "name": "examples",

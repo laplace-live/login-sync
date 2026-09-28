@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 LAPLACE Login Sync is a fork of [CookieCloud](https://github.com/easychen/CookieCloud): a browser extension encrypts the user's cookies (plus a narrow slice of localStorage) in the browser and uploads the ciphertext to a sync server, so a login session can be replayed on another machine or by a headless client. The server never holds the key — it stores one opaque AES blob per token id and hands it back on request.
 
-Two shipped surfaces, released independently: `extension/` (WXT + React, published to the Chrome, Edge, and Firefox stores) and `server/` (Bun + Hono, published as a GHCR container). `server-express/` (Express) is the superseded server — reference only, kept because Dependabot still bumps it.
+Two shipped surfaces, released independently: `extension/` (WXT + React, published to the Chrome, Edge, and Firefox stores) and `server/` (Bun + Hono, published as a GHCR container).
 
 ## Repository layout
 
@@ -20,8 +20,6 @@ server/          the shipped server, package `laplace-login-sync-server` — Bun
   src/index.ts     every route lives here · lib/crypto.ts (CryptoJS-compatible AES) · utils/timingSafeEqual.ts
 client-python/   standalone Python reader for the same encrypted payload
 examples/        Playwright recipe for consuming a synced session
-benchmarks/      hono vs express throughput comparison (node + pnpm, outside the build)
-server-express/  legacy Express server. No longer deployed — reference only, do not develop
 ```
 
 Runtime is **Bun** everywhere. Each subproject installs and runs on its own: only `extension/` is a root workspace, so `bun install` at the root covers the extension, while `server/` keeps its own `bun.lock` and needs its own install. There is no shared build, no root lint script, and no cross-project dependency — the only coupling is the wire format described under [Architecture](#architecture).
@@ -44,7 +42,8 @@ bun install
 bun run dev      # bun --hot src/index.ts, port 8088 (PORT overrides)
 bun test         # src/index.test.ts  ·  src/lib/crypto.test.ts  pinned CryptoJS vectors ↔ lib/crypto.ts
 bun run start    # what the container runs
-bun run src/bench.ts   # crypto benchmarks
+bun run src/bench.ts        # crypto benchmarks
+bun run src/bench-http.ts   # request throughput against a running `bun run dev`
 
 # either project, run from inside it — Biome is a local dep with no npm script
 bunx biome check .          # lint + format + import sort

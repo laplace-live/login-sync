@@ -27,7 +27,9 @@ This project was created using `bun init` in bun v1.0.21. [Bun](https://bun.sh) 
 
 ## Server Benchmarks
 
-The new server delivers a roughly 40% increase in performance. Tested on the Apple M2 Max.
+Start the server with `bun run dev`, then run `bun run src/bench-http.ts`.
+
+Replacing the Express server with Hono gave a roughly 40% increase in performance. Tested on the Apple M2 Max:
 
 ```
 ┌─────────┬────────────────┬─────────┬────────────────────┬──────────┬─────────┐
