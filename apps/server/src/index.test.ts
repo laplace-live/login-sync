@@ -18,6 +18,54 @@ describe('events', () => {
   })
 })
 
+describe('/update limits', () => {
+  const uuid = 'inflationtest'
+
+  afterAll(async () => {
+    await unlink(`${dataDir}/${uuid}.json`).catch(() => {})
+  })
+
+  test('refuses a body that inflates past the size cap', async () => {
+    // `bodyLimit` only sees the compressed body, so the guard that matters is the decompressor's own output cap. This
+    // gzips to a few KB and inflates to 8 MB: uncapped it parses and stores, answering `done`, which is what makes this
+    // a regression test for the cap rather than for the JSON check
+    const body = Bun.gzipSync(JSON.stringify({ uuid, encrypted: 'A'.repeat(8 * 1024 * 1024) }))
+    expect(body.byteLength).toBeLessThan(64 * 1024)
+
+    const res = await app.fetch(new Request('http://localhost/update', { method: 'POST', body }))
+    expect(res.status).toBe(413)
+    expect(await Bun.file(`${dataDir}/${uuid}.json`).exists()).toBe(false)
+  })
+})
+
+describe('private mode configuration', () => {
+  // The mode is read once, at import, so a second configuration needs a second process
+  test('refuses to start when the mode is set without a key', async () => {
+    const proc = Bun.spawn(['bun', join(import.meta.dir, 'index.ts')], {
+      env: {
+        ...process.env,
+        LAPLACE_LOGIN_SYNC_AUTH_MODE: 'true',
+        LAPLACE_LOGIN_SYNC_AUTH_KEY: '',
+        LAPLACE_LOGIN_SYNC_DATA_DIR: dataDir,
+        // A regression would start a real server instead of throwing; port 0 keeps it off the one a dev server holds
+        PORT: '0',
+      },
+      stdout: 'pipe',
+      stderr: 'pipe',
+    })
+    // Without this, that regression would hang on `exited` rather than fail. The stderr check below is what actually
+    // distinguishes refusing to start from being killed here
+    const killer = setTimeout(() => proc.kill(), 10_000)
+    try {
+      const [exitCode, stderr] = await Promise.all([proc.exited, new Response(proc.stderr).text()])
+      expect(stderr).toContain('LAPLACE_LOGIN_SYNC_AUTH_KEY')
+      expect(exitCode).not.toBe(0)
+    } finally {
+      clearTimeout(killer)
+    }
+  }, 15_000)
+})
+
 describe('password routes', () => {
   // Private mode comes from the environment and Bun loads .env into tests, so send the key whenever one is set
   const auth = process.env.LAPLACE_LOGIN_SYNC_AUTH_KEY

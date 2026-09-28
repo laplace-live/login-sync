@@ -16,8 +16,32 @@ interface CookieRequestBody {
 }
 
 const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 8088
-const useAuth = process.env.LAPLACE_LOGIN_SYNC_AUTH_MODE
-const auth = process.env.LAPLACE_LOGIN_SYNC_AUTH_KEY
+
+/**
+ * The key the `/get` routes check reads against, or `undefined` when the server is public.
+ *
+ * `LAPLACE_LOGIN_SYNC_AUTH_MODE` is checked for presence, not truthiness, so `=false` still enables private mode. The
+ * key is then mandatory, and this throws rather than returning `undefined`: the checks below skip a key that isn't set,
+ * so a mode set without one used to leave both `/get` routes wide open — a dropped secret or a mistyped variable name
+ * produced a server that started clean and served every blob to anyone. Refusing to boot turns that silent failure into
+ * a crash on the one variable whose absence removes all access control.
+ *
+ * The key is trimmed because the routes compare it against a token Zod has already trimmed, so a stored key with
+ * surrounding whitespace could never match one.
+ */
+function readAuthKey(): string | undefined {
+  if (process.env.LAPLACE_LOGIN_SYNC_AUTH_MODE === undefined) return undefined
+  const key = process.env.LAPLACE_LOGIN_SYNC_AUTH_KEY?.trim()
+  if (!key) {
+    throw new Error(
+      'LAPLACE_LOGIN_SYNC_AUTH_MODE is set, so LAPLACE_LOGIN_SYNC_AUTH_KEY must hold a non-empty key. Refusing to ' +
+        'start: private mode without a key would serve every blob to anyone. Unset the mode to run a public server.'
+    )
+  }
+  return key
+}
+
+const authKey = readAuthKey()
 
 // this code is inside ./src, so we need to go one level up to access the data folder. The tests point the variable at
 // a temporary directory, because they write and delete blobs
@@ -32,8 +56,10 @@ const zStringNotEmpty = (msg?: string) =>
 // Validate UUID (Actually we' re not using UUID, but leave it for backward compatibility)
 const isValidUuid = (uuid: string) => /^[a-zA-Z0-9]+$/.test(uuid)
 
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024 // 4mb
+
 const limiter = bodyLimit({
-  maxSize: 4 * 1024 * 1024, // 4mb
+  maxSize: MAX_UPLOAD_BYTES,
   onError: () => {
     return new Response('Body too large 😅', { status: 413 })
   },
@@ -48,6 +74,11 @@ const passwordLimiter = bodyLimit({
   },
 })
 
+/** What `unzipSync` throws once its output passes `maxOutputLength`. */
+function isTooLarge(error: unknown): boolean {
+  return error instanceof Error && 'code' in error && error.code === 'ERR_BUFFER_TOO_LARGE'
+}
+
 const app = new Hono()
 
 app.use('/update', cors())
@@ -61,7 +92,11 @@ app.all('/', c => {
 app.post('/update', limiter, async c => {
   try {
     const body = await c.req.arrayBuffer()
-    const raw = unzipSync(body)
+    // `bodyLimit` caps the compressed body; without a cap here too, gzip's ratio does the rest — a few MB of zeros
+    // inflates to gigabytes, synchronously, stalling every other request while it allocates. The same limit serves both
+    // ends because a real upload can't be compressed: the payload is base64 ciphertext, which is high-entropy, so its
+    // gzipped size is its plain size. Over the cap, `unzipSync` throws and the handler answers 413 below
+    const raw = unzipSync(body, { maxOutputLength: MAX_UPLOAD_BYTES })
     const decoder = new TextDecoder()
     const text = decoder.decode(raw)
     const json: CookieRequestBody = JSON.parse(text)
@@ -87,6 +122,12 @@ app.post('/update', limiter, async c => {
       return c.json({ action: 'error' })
     }
   } catch (err) {
+    // An upload that inflated past the cap isn't a malformed body, and logging it as one sends whoever investigates a
+    // resource spike looking for a broken client
+    if (isTooLarge(err)) {
+      console.error('Rejected an upload that inflated past the size cap', err)
+      return c.json({ code: 413, message: 'Body too large' }, 413)
+    }
     console.error('Error parsing JSON:', err)
     return c.json({ code: 400, message: 'Error parsing body' }, 400)
   }
@@ -158,7 +199,7 @@ app.get(
     const uuid = c.req.param('uuid')
     const authToken = query.auth
 
-    if (useAuth !== undefined && auth && (!authToken || !timingSafeEqual(auth, authToken))) {
+    if (authKey !== undefined && (!authToken || !timingSafeEqual(authKey, authToken))) {
       return c.json({ code: 403, message: 'Unauthorized' }, 403)
     }
 
@@ -207,7 +248,7 @@ app.post(
     const uuid = c.req.param('uuid')
     const authToken = form.auth
 
-    if (useAuth !== undefined && auth && (!authToken || !timingSafeEqual(auth, authToken))) {
+    if (authKey !== undefined && (!authToken || !timingSafeEqual(authKey, authToken))) {
       return c.json({ code: 403, message: 'Unauthorized' }, 403)
     }
 
