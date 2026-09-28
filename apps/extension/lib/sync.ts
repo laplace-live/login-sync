@@ -1,5 +1,5 @@
 import type { LoginSyncPayload } from '@laplace.live/login-sync'
-import { encrypt } from '@laplace.live/login-sync'
+import { isLoginSyncError, LoginSyncClient } from '@laplace.live/login-sync'
 
 import type { ConfigProps, DomainConfig } from './types'
 
@@ -55,6 +55,8 @@ export async function uploadCookie(payload: ConfigProps): Promise<SyncResult> {
     return { action: 'fail', note: '请求头解析失败' }
   }
 
+  const client = new LoginSyncClient({ baseURL: DEFAULT_SYNC_SERVER, headers: extraHeaders })
+
   // NOTE: as a fork of the original code, we don't use the `domains` field — pull from STATIC_DOMAINS.
   const domains = STATIC_DOMAINS.map(c => c.domain)
   const blacklist = splitLines(payload.blacklist)
@@ -66,10 +68,10 @@ export async function uploadCookie(payload: ConfigProps): Promise<SyncResult> {
     cookie_data: cookies,
     local_storage_data: localStorages,
   }
-  // `encrypt` serializes the same object, so this string is exactly what gets encrypted
+  // `push` serializes the same object to encrypt it, so this string is exactly what gets encrypted
   const dataToEncrypt = JSON.stringify(syncData)
 
-  const endpoint = `${DEFAULT_SYNC_SERVER}/update`
+  const endpoint = `${client.baseURL}/update`
   const sha256 = await sha256Hex(`${payload.uuid}-${payload.password}-${endpoint}-${dataToEncrypt}`)
 
   console.log('[laplace] upload payload', {
@@ -113,45 +115,30 @@ export async function uploadCookie(payload: ConfigProps): Promise<SyncResult> {
   })
 
   const credentials = { uuid: payload.uuid, password: payload.password }
-  const encrypted = await encrypt(syncData, credentials, { version: PAYLOAD_VERSION })
 
   try {
     showBadge('↑', 'green')
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Encoding': 'gzip',
-        ...extraHeaders,
-      },
-      body: await gzip(JSON.stringify({ uuid: payload.uuid, encrypted })),
+    await client.push(syncData, credentials, { version: PAYLOAD_VERSION })
+    await saveData(STORAGE_KEY_LAST_UPLOAD, {
+      timestamp: Date.now(),
+      sha256,
+      cookieFp,
+      localStorageFp,
+    } satisfies LastUploadInfo)
+    // Confirm the dedupe baseline really got updated. If a subsequent run
+    // logs `prevSha256` that doesn't match this value, it points to either
+    // a write failure or a separate process clobbering the storage key.
+    console.debug('[laplace] saved last-upload state', {
+      sha256,
+      cookieGroups: Object.keys(cookieFp).length,
+      lsGroups: Object.keys(localStorageFp).length,
     })
-
-    const body: unknown = await response.json()
-    const result = isSyncResult(body) ? body : undefined
-    if (result?.action === 'done') {
-      await saveData(STORAGE_KEY_LAST_UPLOAD, {
-        timestamp: Date.now(),
-        sha256,
-        cookieFp,
-        localStorageFp,
-      } satisfies LastUploadInfo)
-      // Confirm the dedupe baseline really got updated. If a subsequent run
-      // logs `prevSha256` that doesn't match this value, it points to either
-      // a write failure or a separate process clobbering the storage key.
-      console.debug('[laplace] saved last-upload state', {
-        sha256,
-        cookieGroups: Object.keys(cookieFp).length,
-        lsGroups: Object.keys(localStorageFp).length,
-      })
-    } else {
-      console.warn('[laplace] response action !== "done"; skipping last-upload save', { result: body })
-    }
-    return result ?? { action: 'fail' }
+    return { action: 'done' }
   } catch (error) {
     console.error('[laplace] upload failed', error)
     showBadge('err')
-    return { action: 'fail', note: '网络请求失败' }
+    // A uuid the server can't store is the user's to fix; without a note, the popup asks them to check their input
+    return isLoginSyncError(error, 'invalid_token') ? { action: 'fail' } : { action: 'fail', note: '网络请求失败' }
   }
 }
 
@@ -161,13 +148,6 @@ function isFreshDuplicate(last: LastUploadInfo | null | undefined, sha256: strin
   // to preserve the original skip-on-dupe behaviour.
   const ts = last.timestamp ?? Date.now()
   return Date.now() - ts < SYNC_DEDUPE_WINDOW_MS
-}
-
-// Buffered on purpose: handing the stream straight to `fetch` needs `duplex: 'half'`,
-// which Firefox doesn't support and Chromium rejects over HTTP/1.x.
-async function gzip(text: string): Promise<ArrayBuffer> {
-  const stream = new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'))
-  return new Response(stream).arrayBuffer()
 }
 
 function splitLines(input: string | undefined): string[] {
@@ -270,13 +250,6 @@ function pickStrings(source: Record<string, unknown>, predicate: (key: string) =
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
-}
-
-// The server's 400 paths answer `{ code, message }` rather than a `SyncResult`.
-function isSyncResult(value: unknown): value is SyncResult {
-  return (
-    isRecord(value) && typeof value.action === 'string' && (value.note === undefined || typeof value.note === 'string')
-  )
 }
 
 export function sleep(ms: number): Promise<void> {

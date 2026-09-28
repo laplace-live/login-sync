@@ -8,7 +8,7 @@ export interface Credentials {
 
 // The server stores each blob as `<uuid>.json` and accepts only ASCII letters and digits, which doubles as its
 // path-traversal guard. The uuid is a short-uuid token, not an RFC 4122 UUID.
-const UUID_PATTERN = /^[a-zA-Z0-9]+$/
+export const UUID_PATTERN = /^[a-zA-Z0-9]+$/
 
 /**
  * Splits a `uuid@password` token as the extension displays it. The uuid can't contain `@`, so the first `@` is the

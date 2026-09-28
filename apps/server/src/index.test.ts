@@ -1,6 +1,6 @@
 import { afterAll, describe, expect, test } from 'bun:test'
 import { unlink } from 'node:fs/promises'
-import { encrypt, SUPPORTED_VERSIONS } from '@laplace.live/login-sync'
+import { encrypt, LoginSyncClient, SUPPORTED_VERSIONS } from '@laplace.live/login-sync'
 
 import app from './'
 
@@ -76,4 +76,38 @@ describe('password routes', () => {
     expect(await (await remove(uuid, password)).json()).toMatchObject({ code: 200 })
     expect(await Bun.file(`${dataDir}/${uuid}.json`).exists()).toBe(false)
   })
+
+  // The SDK client tells its errors apart by these routes' statuses and messages, so this pins both sides of that
+  const clientFor = (authKey: string | undefined) =>
+    new LoginSyncClient({
+      baseURL: 'http://localhost',
+      authKey,
+      fetch: (url, init) => app.fetch(new Request(url, init)),
+    })
+
+  test.each(versions)('v%d: the SDK client pushes, pulls and removes', async version => {
+    const client = clientFor(auth)
+    const credentials = { uuid: `test${crypto.randomUUID().replaceAll('-', '')}`, password }
+    written.push(credentials.uuid)
+
+    await client.push(payload, credentials, { version })
+    expect(await client.pull(credentials)).toEqual({ version, payload })
+
+    await expect(client.remove({ ...credentials, password: 'wrong-password' })).rejects.toHaveProperty(
+      'code',
+      'bad_credentials'
+    )
+    await client.remove(credentials)
+    await expect(client.pull(credentials)).rejects.toHaveProperty('code', 'not_found')
+    await expect(client.remove(credentials)).rejects.toHaveProperty('code', 'not_found')
+  })
+
+  // Private mode is read once, at import, so this runs only when the environment turns it on
+  test.if(process.env.LAPLACE_LOGIN_SYNC_AUTH_MODE !== undefined && Boolean(auth))(
+    'the SDK client reports a wrong auth key as unauthorized',
+    async () => {
+      const pending = clientFor('wrong-key').pull({ uuid: 'anyone', password })
+      await expect(pending).rejects.toHaveProperty('code', 'unauthorized')
+    }
+  )
 })

@@ -13,13 +13,13 @@ Three shipped surfaces, released independently: `apps/extension/` (WXT + React, 
 ```
 apps/extension/       the shipped extension, package `laplace-login-sync` — WXT, MV3 + Firefox MV2
   entrypoints/          background.ts (alarm loop + message handler) · content.ts (localStorage mirror) · popup/ (React)
-  lib/                  sync.ts (the upload path, encrypting through the SDK) · crypto.ts (sha256Hex for the dedupe hash) · sync-diff.ts (diff logging) · use-sync-config.ts · storage · const · types
+  lib/                  sync.ts (the upload path, through the SDK's client) · crypto.ts (sha256Hex for the dedupe hash) · sync-diff.ts (diff logging) · use-sync-config.ts · storage · const · types
   components/ui/        shadcn-style primitives — Radix + CVA + Tailwind v4
   public/_locales/      en + zh_CN messages.json, read via `browser.i18n`
 apps/server/          the shipped server, package `laplace-login-sync-server` — Bun + Hono
   src/index.ts          every route lives here, decrypting through the SDK · utils/timingSafeEqual.ts
-packages/login-sync/  the payload protocol SDK, package `@laplace.live/login-sync` — Web Crypto only, no dependencies
-  src/                  protocol.ts (encrypt/decrypt) · detect.ts (version from the blob prefix) · v1.ts · v2.ts · credentials.ts · payload.ts
+packages/login-sync/  the payload protocol SDK, package `@laplace.live/login-sync` — web platform only, no dependencies
+  src/                  client.ts (LoginSyncClient, the server's fetch client) · protocol.ts (encrypt/decrypt) · detect.ts (version from the blob prefix) · v1.ts · v2.ts · credentials.ts · payload.ts
   PROTOCOL.md           the spec · vectors.json frozen known-answer vectors every implementation must pass
 examples/             Playwright recipe for consuming a synced session
 ```
@@ -44,13 +44,13 @@ bun run --filter laplace-login-sync compile      # wxt prepare, then tsc --noEmi
 
 # server — from apps/server/
 bun run dev      # bun --hot src/index.ts, port 8088 (PORT overrides)
-bun test         # src/index.test.ts: every password route against v1 and v2 blobs  ·  utils/timingSafeEqual.test.ts
+bun test         # src/index.test.ts: every password route against v1 and v2 blobs, raw and through the SDK client  ·  utils/timingSafeEqual.test.ts
 bun run start    # what the container runs
 bun run src/bench-http.ts   # request throughput against a running `bun run dev`
 docker buildx bake --allow=fs.read=../..   # the image, built from the repo root (see docker.yml under Releases)
 
 # sdk — from packages/login-sync/
-bun test          # vectors.json both ways, every error code, and a node:crypto reference reader
+bun test          # vectors.json both ways, every error code, a node:crypto reference reader, and the client against a stub fetch
 bun run compile   # tsc --noEmit
 bun run build     # → dist/ through tsconfig.build.json, which has no Bun types; `npm pack`/`publish` run it too
 bun run smoke     # the built dist/ under Node
@@ -89,9 +89,9 @@ One implementation of the format lives here, the SDK in `packages/login-sync/`, 
 - **Key derivation**: `MD5(uuid + '-' + password)` as a hex string, first 16 characters. That 16-char string is then the _passphrase_ (not the key) fed to EVP_BytesToKey below.
 - **Cipher**: `CryptoJS.AES.encrypt` defaults — OpenSSL `Salted__` envelope, EVP_BytesToKey with MD5 and 3 rounds, AES-256-CBC, PKCS7, base64. crypto-js itself is gone: the SDK's `v1.ts` builds the format on Web Crypto, with a hand-rolled MD5 because Web Crypto has none (its constant table is written out, not derived from `Math.sin`, whose precision engines don't guarantee).
 - **Plaintext shape**: `{ cookie_data, local_storage_data }` — snake_case, and `/remove` uses the presence of `cookie_data` after decryption as proof the caller knows the password.
-- **Transport**: the extension gzips the JSON `{ uuid, encrypted }` with the built-in `CompressionStream` and POSTs it as a raw body with `Content-Encoding: gzip`; the server decompresses it with `node:zlib`'s `unzipSync`.
+- **Transport**: the SDK client's `push` gzips the JSON `{ uuid, encrypted }` with the built-in `CompressionStream` and POSTs it to `/update` as a raw body with `Content-Encoding: gzip`; the server decompresses every upload with `node:zlib`'s `unzipSync`, whatever that header says.
 
-`uuid` is not a UUID — it's a `short-uuid` token, validated as `/^[a-zA-Z0-9]+$/`. That regex is the path-traversal guard, because the token becomes the filename.
+`uuid` is not a UUID — it's a `short-uuid` token, validated as `/^[a-zA-Z0-9]+$/`. That regex is the path-traversal guard, because the token becomes the filename, and the SDK's client checks it too before the token becomes a URL path segment.
 
 **`packages/login-sync` is the versioned successor.** The extension writes through it, in v1 (`PAYLOAD_VERSION` in `lib/const.ts`), and the server reads through it, in either version. Its `PROTOCOL.md` specifies v1 (exactly the format above) and v2: PBKDF2-SHA256 over the full password with a uuid-bound salt, AES-256-GCM with the uuid as additional data, stored as `v2:` + base64(nonce ‖ ciphertext ‖ tag). Readers tell versions apart by prefix — `U2FsdGVkX1` is v1, `v2:` is v2 — so the SDK reads both. Nothing may write v2 until every other reader (laplace-workers, laplace-cf-workers) decrypts through the SDK or passes its `vectors.json`: detection lets a new reader open old blobs, never an old reader open new ones. Keep v2 at 100,000 PBKDF2 iterations or fewer — Cloudflare Workers rejects more in production only, and no local runtime reproduces it. `vectors.json` is frozen; add vectors, never edit them.
 
@@ -100,11 +100,15 @@ One implementation of the format lives here, the SDK in `packages/login-sync/`, 
 Everything lives in `apps/server/src/index.ts`; storage is `apps/server/data/<uuid>.json` holding `{ encrypted }` (gitignored, a Docker volume in production). No database.
 
 - `POST /update` — 4 MB `bodyLimit`, writes the file and reads it back to confirm.
-- `GET /get/:uuid` — returns the ciphertext untouched, `Cache-Control: private, max-age=5`.
+- `GET /get/:uuid` — returns the ciphertext untouched, `Cache-Control: private, max-age=5`. Browsers honor that, so a read from a browser can be 5 s stale.
 - `POST /get/:uuid` — same, plus an optional `password` that makes the _server_ decrypt and return plaintext (a wrong one answers 403). Convenience for trusted callers; it means the password crosses the wire.
 - `POST /remove` — form-encoded `uuid` + `token`; deletes only if `token` decrypts the blob.
 
 **Private mode** (this fork's addition) requires both `LAPLACE_LOGIN_SYNC_AUTH_MODE` and `LAPLACE_LOGIN_SYNC_AUTH_KEY`. The mode variable is checked for _presence_, not truthiness — setting it to `false` still enables auth. Comparison goes through `utils/timingSafeEqual.ts`. Note the gate covers only the two `/get` routes: `/update` and `/remove` stay open, since both already require knowing the password.
+
+**The SDK's `LoginSyncClient` depends on these exact responses.** `pull` reads `GET /get/:uuid`, or `POST /get/:uuid` with `{ auth }` when it has an `authKey`, so the key stays out of URLs, and decrypts locally. `push` encrypts and uploads to `/update`, and `remove` sends the password because the route requires it. Some errors can only be told apart by the response body. A 403 with `message: 'Unauthorized'` means a bad auth key, and one with `'Invalid credentials'` means there's no blob. On `/remove`, a wrong password comes back as HTTP 200 with `code: 403`. If you change a route's status or message, change `client.ts` too. The client tests in `apps/server/src/index.test.ts` fail if the two drift apart.
+
+The client's default `baseURL` is `https://login-sync.laplace.cn`, the same server as the extension's `DEFAULT_SYNC_SERVER`. `https://login-sync.laplace.id` is the old host and now only 308-redirects to `.cn`. Server-side `fetch` follows that redirect, but browsers refuse it: the redirect carries no CORS headers, and a preflight may never be redirected. Installs from early 2024 may still have `.id` in the inert `endpoint` field.
 
 `src/handlers/update.ts` is dead — superseded by the inline handler, and its `dataDir` is wrong. Don't wire it back up.
 
@@ -120,7 +124,7 @@ Two things suppress an upload: `type === 'pause'`, and the dedupe check — SHA2
 
 ### What's configurable is narrower than it looks
 
-`lib/const.ts` hardcodes `STATIC_DOMAINS` — `bilibili.com` (cookies only) and `laplace.live` (cookies plus localStorage keys prefixed `loginSyncOption`). Several `ConfigProps` fields are inert upstream leftovers kept for storage compatibility: `domains` and `blacklist` are bypassed by `STATIC_DOMAINS`, `sync_laplace_live` is read nowhere, and `endpoint` feeds the dedupe hash but not the request — uploads always go to `DEFAULT_SYNC_SERVER`. The `'down'` branch in `content.ts` is likewise unreachable, since `Action` is `'up' | 'pause'`. Delete-vs-keep is a judgement call, but don't add UI for any of them without wiring them through first.
+`lib/const.ts` hardcodes `STATIC_DOMAINS` — `bilibili.com` (cookies only) and `laplace.live` (cookies plus localStorage keys prefixed `loginSyncOption`). Several `ConfigProps` fields are inert upstream leftovers kept for storage compatibility: `domains` and `blacklist` are bypassed by `STATIC_DOMAINS`, `sync_laplace_live` is read nowhere, and `endpoint` is only checked for being non-empty — uploads and their dedupe hash both use `DEFAULT_SYNC_SERVER`. The `'down'` branch in `content.ts` is likewise unreachable, since `Action` is `'up' | 'pause'`. Delete-vs-keep is a judgement call, but don't add UI for any of them without wiring them through first.
 
 localStorage can't be read from the background, so `content.ts` mirrors each host's localStorage into extension storage under `LS-<host>` on page load, and `sync.ts` reads that mirror.
 
