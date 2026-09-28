@@ -110,6 +110,8 @@ Everything lives in `apps/server/src/index.ts`; storage is `apps/server/data/<uu
 
 The client's default `baseURL` is `https://login-sync.laplace.cn`, the same server as the extension's `DEFAULT_SYNC_SERVER`. `https://login-sync.laplace.id` is the old host and now only 308-redirects to `.cn`. Server-side `fetch` follows that redirect, but browsers refuse it: the redirect carries no CORS headers, and a preflight may never be redirected. Installs from early 2024 may still have `.id` in the inert `endpoint` field.
 
+Cloudflare's firewall in front of production can answer server-side callers with a challenge page instead of the server's reply. From one machine, Node's `fetch` got the challenge (`cf-mitigated: challenge`), while Bun's and Chrome's got through. The client reports it as a `server_error` with status 403. LAPLACE's workers get past it by sending a bypass header with their token, and through the SDK that header goes in the client's `headers`. Take its name and token from laplace-workers. Don't write the real header name into this repo: the README ships to npm, so docs, tests and examples use a placeholder such as `x-example-waf-token`.
+
 `src/handlers/update.ts` is dead — superseded by the inline handler, and its `dataDir` is wrong. Don't wire it back up.
 
 ### Extension: a one-minute alarm on a phase-locked schedule

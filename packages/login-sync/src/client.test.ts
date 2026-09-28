@@ -61,7 +61,7 @@ describe('baseURL', () => {
 describe('push', () => {
   test('gzips { uuid, encrypted } to /update, with custom headers alongside the protocol ones', async () => {
     const { client, requests } = withServer(() => Response.json({ action: 'done' }), {
-      headers: { 'x-laplace-cf-waf-bypass': 'token', 'Content-Encoding': 'br' },
+      headers: { 'x-example-waf-token': 'token', 'Content-Encoding': 'br' },
     })
     await client.push(payload, credentials, { version: 2 })
 
@@ -70,7 +70,7 @@ describe('push', () => {
     expect(request?.url).toBe('https://sync.example/update')
     expect(request?.headers.get('Content-Type')).toBe('application/json')
     expect(request?.headers.get('Content-Encoding')).toBe('gzip')
-    expect(request?.headers.get('x-laplace-cf-waf-bypass')).toBe('token')
+    expect(request?.headers.get('x-example-waf-token')).toBe('token')
 
     const body = request && (await gunzipJson(request))
     expect(body).toEqual({ uuid: credentials.uuid, encrypted: expect.stringMatching(/^v2:/) })

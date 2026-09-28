@@ -20,7 +20,11 @@ import {
   parseToken,
 } from "@laplace.live/login-sync";
 
-const client = new LoginSyncClient({ authKey: env.LAPLACE_LOGIN_SYNC_AUTH_KEY });
+const client = new LoginSyncClient({
+  authKey: env.LAPLACE_LOGIN_SYNC_AUTH_KEY,
+  // Sent with every request. A placeholder: use the header and token your firewall actually checks
+  headers: { "x-example-waf-token": env.WAF_TOKEN },
+});
 const credentials = parseToken(token); // 'uuid@password'
 
 try {
@@ -45,6 +49,8 @@ await client.remove(credentials);
 Each method also takes a `signal`, e.g. `client.pull(credentials, { signal: AbortSignal.timeout(10_000) })`.
 
 - `remove` sends the password: the server deletes a blob only after opening it.
+- A firewall in front of the server, such as Cloudflare's, may answer a server-side caller with a challenge page. That
+  surfaces as a `server_error` with `status` 403. Send whatever header the firewall expects in `headers`, as above.
 - An `authKey` travels in a POST body, never in the URL. Without one, `pull` is a GET, and browsers may answer it from
   their cache for up to 5 seconds, as the server's `Cache-Control` allows. For fresh reads, pass
   `fetch: (url, init) => fetch(url, { ...init, cache: "no-store" })`.
