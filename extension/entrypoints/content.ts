@@ -34,12 +34,9 @@ export default defineContentScript({
           await removeData(lsKey)
         }
       } else {
-        const all = localStorage
-        const keys = Object.keys(all)
-        const values = Object.values(all)
         const result: Record<string, string> = {}
-        for (let i = 0; i < keys.length; i++) {
-          result[keys[i]] = values[i]
+        for (const [key, value] of Object.entries(localStorage)) {
+          if (typeof value === 'string') result[key] = value
         }
         if (Object.keys(result).length > 0) {
           await saveData(lsKey, result)

@@ -87,15 +87,17 @@ jobs:
           name: extension-builds
           path: extension/.output/
 
-      # See https://wxt.dev/guide/essentials/publishing.html
-      # Run `bun x wxt submit init` locally to generate the secrets below.
+      # `wxt submit` wraps publish-browser-extension, which reads these env vars:
+      # https://github.com/aklinker1/publish-browser-extension/blob/main/docs/config-reference.md
+      # Run `bun x wxt submit init` locally to generate the secrets.
       - name: Submit to stores
         env:
+          # Service-account auth; CWS API v1.1 stops working on 2026-10-15
+          CHROME_API_VERSION: v2
           CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
-          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
-          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
-          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
-          CHROME_PUBLISH_TARGET: default
+          CHROME_PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
+          CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL: ${{ secrets.CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL }}
+          CHROME_SERVICE_ACCOUNT_PRIVATE_KEY: ${{ secrets.CHROME_SERVICE_ACCOUNT_PRIVATE_KEY }}
           CHROME_SKIP_SUBMIT_REVIEW: false
           FIREFOX_EXTENSION_ID: ${{ secrets.FIREFOX_EXTENSION_ID }}
           FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
@@ -106,6 +108,9 @@ jobs:
           EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}
           EDGE_SKIP_SUBMIT_REVIEW: false
         run: |
+          # Unescape `\n` so the secret can also be a JSON key file's one-line `private_key`
+          CHROME_SERVICE_ACCOUNT_PRIVATE_KEY="$(printf '%b' "$CHROME_SERVICE_ACCOUNT_PRIVATE_KEY")"
+          export CHROME_SERVICE_ACCOUNT_PRIVATE_KEY
           bun x wxt submit \
             --chrome-zip .output/*-chrome.zip \
             --edge-zip .output/*-chrome.zip \

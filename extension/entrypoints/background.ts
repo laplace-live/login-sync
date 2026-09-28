@@ -52,10 +52,9 @@ export default defineBackground(() => {
     if (config.keep_live) {
       // 按行分割，每行的格式为 url|interval
       const keepLiveLines = config.keep_live?.trim()?.split('\n')
-      for (let i = 0; i < keepLiveLines.length; i++) {
-        const line = keepLiveLines[i]
+      for (const line of keepLiveLines) {
         const parts = line.split('|')
-        const url = parts[0]
+        const url = parts[0] ?? ''
         const interval = parts[1] ? parseInt(parts[1], 10) : 60
         if (interval > 0 && minuteCount % interval === 0) {
           console.log('[laplace] keep-alive tick', { url, every: interval })
