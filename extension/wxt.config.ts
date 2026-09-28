@@ -1,18 +1,18 @@
 import tailwindcss from '@tailwindcss/vite'
-import { defaultClientConditions } from 'vite'
 import { defineConfig } from 'wxt'
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
   modules: ['@wxt-dev/module-react', '@wxt-dev/auto-icons'],
+  // Bundle @laplace.live/login-sync from its workspace source instead of its dist/, so the extension never needs the
+  // SDK built first and never ships a stale build of it. WXT applies aliases to Vite and to the generated tsconfig, so
+  // the SDK's published package.json stays free of workspace plumbing. It points at a file, so a subpath import such
+  // as `@laplace.live/login-sync/vectors.json` would break under it.
+  alias: {
+    '@laplace.live/login-sync': '../packages/login-sync/src/index.ts',
+  },
   vite: () => ({
     plugins: [tailwindcss()],
-    resolve: {
-      // Bundle @laplace.live/login-sync from its workspace source instead of its dist/, so the extension never needs
-      // the SDK built first and never ships a stale build of it. Setting `conditions` replaces Vite's defaults, hence
-      // the spread.
-      conditions: ['@laplace.live/source', ...defaultClientConditions],
-    },
   }),
   manifest: {
     name: '__MSG_appTitle__',
