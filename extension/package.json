@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@biomejs/biome": "^2.5.14",
+    "@laplace.live/login-sync": "workspace:*",
     "@tabler/icons-react": "^3.48.0",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",

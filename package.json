@@ -4,7 +4,8 @@
   "type": "module",
   "private": true,
   "workspaces": [
-    "extension"
+    "extension",
+    "packages/*"
   ],
   "scripts": {
     "tag": "changeset tag",

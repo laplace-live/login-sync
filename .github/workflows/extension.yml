@@ -13,6 +13,8 @@ on:
       - "master"
     paths:
       - "extension/**"
+      # The extension bundles the SDK from source
+      - "packages/login-sync/**"
       - ".github/workflows/extension.yml"
   workflow_dispatch:
 

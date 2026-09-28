@@ -14,6 +14,10 @@
       "path": "server"
     },
     {
+      "name": "sdk",
+      "path": "packages/login-sync"
+    },
+    {
       "name": "client-python",
       "path": "client-python"
     },

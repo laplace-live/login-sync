@@ -1,13 +1,17 @@
+import type { LoginSyncPayload } from '@laplace.live/login-sync'
+import { encrypt } from '@laplace.live/login-sync'
+
 import type { ConfigProps, DomainConfig } from './types'
 
 import {
   DEFAULT_SYNC_SERVER,
+  PAYLOAD_VERSION,
   STATIC_DOMAINS,
   STORAGE_KEY_LAST_UPLOAD,
   STORAGE_KEY_LS_PREFIX,
   SYNC_DEDUPE_WINDOW_MS,
 } from './const'
-import { encryptAes, md5Hex, sha256Hex } from './crypto'
+import { sha256Hex } from './crypto'
 import { browserLoadAll, loadData, saveData } from './storage'
 import {
   type CookieFingerprint,
@@ -57,11 +61,13 @@ export async function uploadCookie(payload: ConfigProps): Promise<SyncResult> {
   const cookies = await getCookieByDomains(domains, blacklist)
   const localStorages = await getLocalStorageByDomains(STATIC_DOMAINS)
 
-  // NOTE: server contract — these snake_case keys are decrypted and parsed by the sync server.
-  const dataToEncrypt = JSON.stringify({
+  // NOTE: protocol contract — every reader expects these snake_case keys once decrypted (the SDK's PROTOCOL.md).
+  const syncData: LoginSyncPayload = {
     cookie_data: cookies,
     local_storage_data: localStorages,
-  })
+  }
+  // `encrypt` serializes the same object, so this string is exactly what gets encrypted
+  const dataToEncrypt = JSON.stringify(syncData)
 
   const endpoint = `${DEFAULT_SYNC_SERVER}/update`
   const sha256 = await sha256Hex(`${payload.uuid}-${payload.password}-${endpoint}-${dataToEncrypt}`)
@@ -106,8 +112,8 @@ export async function uploadCookie(payload: ConfigProps): Promise<SyncResult> {
     curr: sha256,
   })
 
-  const aesKey = md5Hex(`${payload.uuid}-${payload.password}`).substring(0, 16)
-  const encrypted = await encryptAes(dataToEncrypt, aesKey)
+  const credentials = { uuid: payload.uuid, password: payload.password }
+  const encrypted = await encrypt(syncData, credentials, { version: PAYLOAD_VERSION })
 
   try {
     showBadge('↑', 'green')
@@ -188,8 +194,8 @@ function parseExtraHeaders(input: string | undefined): Record<string, string> {
 
 export async function getLocalStorageByDomains(
   domainConfigs: DomainConfig[] = []
-): Promise<Record<string, Record<string, unknown>>> {
-  const ret: Record<string, Record<string, unknown>> = {}
+): Promise<LoginSyncPayload['local_storage_data']> {
+  const ret: LoginSyncPayload['local_storage_data'] = {}
   if (!domainConfigs.length) return ret
 
   const localStorages = await browserLoadAll(STORAGE_KEY_LS_PREFIX)
@@ -202,7 +208,7 @@ export async function getLocalStorageByDomains(
       if (!isRecord(data)) continue
 
       if (domain === LAPLACE_DOMAIN) {
-        const filtered = pickByKey(data, k => k.startsWith(LAPLACE_LS_KEY_PREFIX))
+        const filtered = pickStrings(data, k => k.startsWith(LAPLACE_LS_KEY_PREFIX))
         if (Object.keys(filtered).length > 0) {
           console.debug('[laplace] localStorage matched (whitelisted)', {
             domain,
@@ -212,7 +218,7 @@ export async function getLocalStorageByDomains(
         }
       } else {
         console.debug('[laplace] localStorage matched', { domain, key })
-        ret[key] = data
+        ret[key] = pickStrings(data, () => true)
       }
     }
   }
@@ -252,10 +258,12 @@ async function getCookieByDomains(domains: string[] = [], blacklist: string[] = 
   return ret
 }
 
-function pickByKey(source: Record<string, unknown>, predicate: (key: string) => boolean): Record<string, unknown> {
-  const out: Record<string, unknown> = {}
+// localStorage only holds strings, and content.ts mirrors nothing else, so a non-string value isn't page data
+function pickStrings(source: Record<string, unknown>, predicate: (key: string) => boolean): Record<string, string> {
+  const out: Record<string, string> = {}
   for (const key in source) {
-    if (predicate(key)) out[key] = source[key]
+    const value = source[key]
+    if (predicate(key) && typeof value === 'string') out[key] = value
   }
   return out
 }

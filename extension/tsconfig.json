@@ -1,6 +1,8 @@
 {
   "extends": "./.wxt/tsconfig.json",
   "compilerOptions": {
+    // Resolve @laplace.live/login-sync to its TypeScript source, matching `resolve.conditions` in wxt.config.ts
+    "customConditions": ["@laplace.live/source"],
     "allowImportingTsExtensions": true,
     "jsx": "react-jsx"
   }

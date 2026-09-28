@@ -1,6 +1,15 @@
+import type { ProtocolVersion } from '@laplace.live/login-sync'
+
 import type { DomainConfig } from './types'
 
 export const DEFAULT_SYNC_SERVER = 'https://login-sync.laplace.cn'
+
+/**
+ * The protocol version uploads are written in. Readers can only open versions they already know, so this stays at 1
+ * until every reader (the server's password routes, laplace-workers, laplace-cf-workers) decrypts through
+ * `@laplace.live/login-sync`. See its PROTOCOL.md.
+ */
+export const PAYLOAD_VERSION: ProtocolVersion = 1
 
 export const STORAGE_KEY_CONFIG = 'COOKIE_SYNC_SETTING'
 

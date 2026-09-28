@@ -1,0 +1,153 @@
+{
+  "$comment": "Frozen known-answer vectors for the Login Sync payload protocol (see PROTOCOL.md). Add new vectors; never edit or remove existing ones. v1 entries are crypto-js 4.2.0 output.",
+  "v1": {
+    "cipher": [
+      {
+        "name": "short ASCII plaintext",
+        "passphrase": "secretText",
+        "plaintext": "messageText",
+        "blob": "U2FsdGVkX18FJcvgZv9KNl8fv0qkq8gKGR3zEDxnxIU="
+      },
+      {
+        "name": "block-aligned plaintext gets a whole padding block",
+        "passphrase": "secretText",
+        "plaintext": "sixteen byte msg",
+        "blob": "U2FsdGVkX19KyjqGgCM3doRpFY+b+oJLHXRhOaHVWkskgoX2NVv4MP2k4zulaEuI"
+      }
+    ],
+    "payload": [
+      {
+        "name": "multi-block payload with multi-byte UTF-8",
+        "uuid": "uuid1234",
+        "password": "password12345",
+        "passphrase": "e44668e7b258adc4",
+        "plaintext": "{\"cookie_data\":{\"bilibili.com\":[{\"domain\":\".bilibili.com\",\"name\":\"SESSDATA\",\"value\":\"fake-session-value\",\"path\":\"/\"}]},\"local_storage_data\":{\"laplace.live\":{\"loginSyncOptionName\":\"拉普拉斯 🍪\"}}}",
+        "blob": "U2FsdGVkX19fhfCPlHeiFpiR2DprwTI195IRbx8zZEUAiScSZdhfArMCEDtxDAILc7ZJ4Vw9GttychuB20Qoa7AGFeYWYVNJJjPBytbBsCq7Y0OeSH89PvSmEkHU1fEV74iNMZD02KCgPwxVJODn/eg5/MBHM8hz3gIm197TWo6SjIqyfHkCDWxcg7A/oHeQj4MioJSE/+s2cXQTePNsvVkHSlMLCXjZxrW55I0tMW4WPtqRIyDVYGcstF0bkuzQibnI3nt9hKrC0p0YANv5qWG3457js2BwNen/wn51/u0="
+      }
+    ]
+  },
+  "v2": [
+    {
+      "name": "minimal payload",
+      "uuid": "uuid1234",
+      "password": "password12345",
+      "key": "5a1cffe2a8f61b466bbfbf0b622f383c8b6cdfc62255e2c9c2ff04f1db7913e4",
+      "nonce": "000102030405060708090a0b",
+      "plaintext": "{\"cookie_data\":{},\"local_storage_data\":{}}",
+      "blob": "v2:AAECAwQFBgcICQoLCClDYBfBe1bTKF/qCQ3uSrslhvBW+xm82OGPYcgSfkJR0j935cBdfprNPxKAbyKmfy/KpPabEcnzXg=="
+    },
+    {
+      "name": "multi-block payload with multi-byte UTF-8",
+      "uuid": "uuid1234",
+      "password": "password12345",
+      "key": "5a1cffe2a8f61b466bbfbf0b622f383c8b6cdfc62255e2c9c2ff04f1db7913e4",
+      "nonce": "a1b2c3d4e5f60718293a4b5c",
+      "plaintext": "{\"cookie_data\":{\"bilibili.com\":[{\"domain\":\".bilibili.com\",\"name\":\"SESSDATA\",\"value\":\"fake-session-value\",\"path\":\"/\"}]},\"local_storage_data\":{\"laplace.live\":{\"loginSyncOptionName\":\"拉普拉斯 🍪\"}}}",
+      "blob": "v2:obLD1OX2BxgpOktc6x0eL56iKzEBHA7x5QO59LE7Ilx0MY8os1tt6jAudJRfCqHF2SXlj9PChzD0MOGy4nFT80xyOCFGKhtG5byz9dnI+nfmxRSQ5UbaLHvu/iqVgaUPkbB0sCEFsZlLipdYZQxVHnpRhvtm8gBgDwWDrK9/18b9XBRkRnPozSjQAyL/bw+rOcN+2OA1CAwOyk1f7Ei1oF6U1HYmreqqCNmxc8eLq7c6Vj/erbS0Svd+fnAarzUhTJCPriFgEP/AThkF0LbXYghSIK37CtuSos+zkRFoRI5Wzqm7gg=="
+    },
+    {
+      "name": "short-uuid credentials with full cookie records",
+      "uuid": "sQ4b8nKx2PzT7wYc9dLmRe",
+      "password": "Hj3Vn8Qw2Zr5Tk9Bx4Mc7p",
+      "key": "14ebb42cf806e9eb83fa971308468b81ac8956d33d376ff7e071cd08a8239f7d",
+      "nonce": "5d1f0c9e2b7a4c3e8f6d1a02",
+      "plaintext": "{\"cookie_data\":{\"bilibili.com\":[{\"domain\":\".bilibili.com\",\"expirationDate\":1806969600,\"hostOnly\":false,\"httpOnly\":true,\"name\":\"SESSDATA\",\"path\":\"/\",\"sameSite\":\"unspecified\",\"secure\":true,\"session\":false,\"storeId\":\"0\",\"value\":\"fake%2Csession%2Cvalue\"},{\"domain\":\".bilibili.com\",\"expirationDate\":1806969600,\"hostOnly\":false,\"httpOnly\":false,\"name\":\"bili_jct\",\"path\":\"/\",\"sameSite\":\"unspecified\",\"secure\":false,\"session\":false,\"storeId\":\"0\",\"value\":\"fakecsrf0000000000000000000000\"}]},\"local_storage_data\":{\"laplace.live\":{\"loginSyncOptionSendDanmaku\":\"true\"}}}",
+      "blob": "v2:XR8Mnit6TD6PbRoCiFQGlNNzGxI1FLwu621OQTSNjmfWqJY3H/X5NDsrcC2ATWuJrW8OurUrSW/b1T9Bthim/YMZmm6YJF9ynqgHuk12qektbPMmvVyQoTJcJ6SQaeY/P8LelHFNsyV9qauXmGOwp79tqKwvMk3AmbAOuoDDkpDfjvzndS1RSooWOTp+NrIlPseKR3dritr0YQChj8wS6n64qMr8JuEpg3/VGRldo17hjLH3KIR1Sr9C6lM+sZjnPRbRRMtAspae/soInJ+IWRgTLO7PFdoCNVjIlGB72m1NZUKSqpwyJoGkrPDHquBF7TgmuP9co9G0+8a0YYFS33uk5kiGaDfG3WAga2OQ03MZxMVBV1T6xY0ypytw1FDqoUqtJCYjvemssPYD2rDjeruaZka+/ySoePEApc2ehAGllO9whTVRKxOj/iayGgc3hNYtDcuF6ePNNIKiQT0LSCcLDZPWuNBxM3W1Sa1So3ptBqEk+liKbtO7zXLKqpshnzGOQ396nhjikh0aQGoUD4FBFrpisbMsZdNE+wQoKPRXMYDRcwz4h7sM6yHMNewCfiwOi/5d2nr2tTe5AU8K7mgbsY0H1Z1Gc7zTq38Ls3ZWZ9TxLLlTMyMzrKuTabdy+vTv+3Lik0o8Wf5pBSXvEeGvhYZIb7oBReqXOHmVrP00vA6/0ICnpxFV6Yipb/py+dSoKZt4pcpwd2nVBm6YXadjoNCFMOkl4jlNxFk3N2KX2DQaS7otbOBKxuYFj2l5t2eemxZhqJSO/w=="
+    },
+    {
+      "name": "non-ASCII password containing @",
+      "uuid": "abc123",
+      "password": "pässwörd@🍪",
+      "key": "66d86b535627838b4b1206e949d5e0f6cf6a6feddddca36ce513294ecb858e7f",
+      "nonce": "ffeeddccbbaa998877665544",
+      "plaintext": "{\"cookie_data\":{},\"local_storage_data\":{}}",
+      "blob": "v2:/+7dzLuqmYh3ZlVEAaKBMol68t6vT1U0UKDbG9TJklwwP3dpzsO6pDnSTD8tXv9W0bgQRrt/s4lvxDXO3C5EtFM0muPxiw=="
+    }
+  ],
+  "errors": [
+    {
+      "name": "v2 with the wrong password",
+      "uuid": "uuid1234",
+      "password": "wrong-password",
+      "blob": "v2:AAECAwQFBgcICQoLCClDYBfBe1bTKF/qCQ3uSrslhvBW+xm82OGPYcgSfkJR0j935cBdfprNPxKAbyKmfy/KpPabEcnzXg==",
+      "code": "bad_credentials"
+    },
+    {
+      "name": "v2 opened under another uuid",
+      "uuid": "uuid5678",
+      "password": "password12345",
+      "blob": "v2:AAECAwQFBgcICQoLCClDYBfBe1bTKF/qCQ3uSrslhvBW+xm82OGPYcgSfkJR0j935cBdfprNPxKAbyKmfy/KpPabEcnzXg==",
+      "code": "bad_credentials"
+    },
+    {
+      "name": "v2 with one ciphertext byte flipped",
+      "uuid": "uuid1234",
+      "password": "password12345",
+      "blob": "v2:AAECAwQFBgcICQoLCClDYBfBe1bSKF/qCQ3uSrslhvBW+xm82OGPYcgSfkJR0j935cBdfprNPxKAbyKmfy/KpPabEcnzXg==",
+      "code": "bad_credentials"
+    },
+    {
+      "name": "v2 too short to hold a nonce and a tag",
+      "uuid": "uuid1234",
+      "password": "password12345",
+      "blob": "v2:AAAA",
+      "code": "malformed"
+    },
+    {
+      "name": "v2 body that is not base64",
+      "uuid": "uuid1234",
+      "password": "password12345",
+      "blob": "v2:***",
+      "code": "malformed"
+    },
+    {
+      "name": "v2 that authenticates but is not JSON",
+      "uuid": "uuid1234",
+      "password": "password12345",
+      "blob": "v2:DAsKCQgHBgUEAwIBD3XpO8eki9lNctKYMJmAJ8USblCafi4W",
+      "code": "malformed"
+    },
+    {
+      "name": "v2 JSON without cookie_data",
+      "uuid": "uuid1234",
+      "password": "password12345",
+      "blob": "v2:EBESExQVFhcYGRobKt3nKhgjtiwGWFNOEI4PRiFUvDbgwivMRYUp8eYN3LeLo25a3P3ftew=",
+      "code": "malformed"
+    },
+    {
+      "name": "v1 with the wrong password",
+      "uuid": "uuid1234",
+      "password": "wrong-password",
+      "blob": "U2FsdGVkX19fhfCPlHeiFpiR2DprwTI195IRbx8zZEUAiScSZdhfArMCEDtxDAILc7ZJ4Vw9GttychuB20Qoa7AGFeYWYVNJJjPBytbBsCq7Y0OeSH89PvSmEkHU1fEV74iNMZD02KCgPwxVJODn/eg5/MBHM8hz3gIm197TWo6SjIqyfHkCDWxcg7A/oHeQj4MioJSE/+s2cXQTePNsvVkHSlMLCXjZxrW55I0tMW4WPtqRIyDVYGcstF0bkuzQibnI3nt9hKrC0p0YANv5qWG3457js2BwNen/wn51/u0=",
+      "code": "bad_credentials"
+    },
+    {
+      "name": "v1 cut off mid-block",
+      "uuid": "uuid1234",
+      "password": "password12345",
+      "blob": "U2FsdGVkX19fhfCPlHeiFpiR2DprwTI195IRbx8zZEUAiScSZdhfAg==",
+      "code": "malformed"
+    },
+    {
+      "name": "v1 is never tagged",
+      "uuid": "uuid1234",
+      "password": "password12345",
+      "blob": "v1:AAAA",
+      "code": "malformed"
+    },
+    {
+      "name": "a future version",
+      "uuid": "uuid1234",
+      "password": "password12345",
+      "blob": "v3:AAAA",
+      "code": "unsupported_version"
+    },
+    {
+      "name": "the server response instead of the blob",
+      "uuid": "uuid1234",
+      "password": "password12345",
+      "blob": "{\"encrypted\":\"U2FsdGVkX19fhfCPlHeiFpiR2DprwTI195IRbx8zZEUAiScSZdhfArMCEDtxDAILc7ZJ4Vw9GttychuB20Qoa7AGFeYWYVNJJjPBytbBsCq7Y0OeSH89PvSmEkHU1fEV74iNMZD02KCgPwxVJODn/eg5/MBHM8hz3gIm197TWo6SjIqyfHkCDWxcg7A/oHeQj4MioJSE/+s2cXQTePNsvVkHSlMLCXjZxrW55I0tMW4WPtqRIyDVYGcstF0bkuzQibnI3nt9hKrC0p0YANv5qWG3457js2BwNen/wn51/u0=\"}",
+      "code": "malformed"
+    }
+  ]
+}

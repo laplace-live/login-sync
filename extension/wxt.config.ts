@@ -1,4 +1,5 @@
 import tailwindcss from '@tailwindcss/vite'
+import { defaultClientConditions } from 'vite'
 import { defineConfig } from 'wxt'
 
 // See https://wxt.dev/api/config.html
@@ -6,6 +7,12 @@ export default defineConfig({
   modules: ['@wxt-dev/module-react', '@wxt-dev/auto-icons'],
   vite: () => ({
     plugins: [tailwindcss()],
+    resolve: {
+      // Bundle @laplace.live/login-sync from its workspace source instead of its dist/, so the extension never needs
+      // the SDK built first and never ships a stale build of it. Setting `conditions` replaces Vite's defaults, hence
+      // the spread.
+      conditions: ['@laplace.live/source', ...defaultClientConditions],
+    },
   }),
   manifest: {
     name: '__MSG_appTitle__',
