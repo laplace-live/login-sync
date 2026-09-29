@@ -5,12 +5,11 @@ import type { DomainConfig } from './types'
 export const DEFAULT_SYNC_SERVER = 'https://login-sync.laplace.cn'
 
 /**
- * The protocol version uploads are written in. Readers can only open versions they already know, so this stays at 1
- * until every other reader (laplace-workers, laplace-cf-workers, and the crypto-js recipe in examples/playwright)
- * decrypts through a `@laplace.live/login-sync` release after 1.0.0, whose v2 predates the current format. The server
- * already does. See its PROTOCOL.md.
+ * The protocol version uploads are written in. Readers can only open versions they already know, so raising this is a
+ * rollout: every reader must open the new version before any extension writes it. v2 needs `@laplace.live/login-sync`
+ * 1.1.0 or later; 1.0.0 implements an earlier v2 and can't open these blobs. See its PROTOCOL.md.
  */
-export const PAYLOAD_VERSION: ProtocolVersion = 1
+export const PAYLOAD_VERSION: ProtocolVersion = 2
 
 export const STORAGE_KEY_CONFIG = 'COOKIE_SYNC_SETTING'
 

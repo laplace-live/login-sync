@@ -95,9 +95,9 @@ signal's reason instead. Branch on `code`:
 
 ## Versions
 
-| Version | Format                                                                | Status                                  |
-| ------- | --------------------------------------------------------------------- | --------------------------------------- |
-| v1      | CryptoJS AES passphrase format (CookieCloud)                          | What every extension build writes today |
-| v2      | PBKDF2-SHA256 (100,000 iterations), HKDF, AES-256-GCM, key commitment | Read by this SDK; not written yet       |
+| Version | Format                                                                | Status                                    |
+| ------- | --------------------------------------------------------------------- | ----------------------------------------- |
+| v1      | CryptoJS AES passphrase format (CookieCloud)                          | Read; what older extension releases wrote |
+| v2      | PBKDF2-SHA256 (100,000 iterations), HKDF, AES-256-GCM, key commitment | Read; what the extension writes           |
 
 [`vectors.json`](./vectors.json) ships with the package and holds known-answer vectors for ports to other languages.
