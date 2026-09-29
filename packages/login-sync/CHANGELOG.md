@@ -1,5 +1,16 @@
 # @laplace.live/login-sync
 
+## 1.2.0
+
+### Minor Changes
+
+- bb4261f: detach from [CookieCloud](https://github.com/easychen/CookieCloud) on September 29, 2026. The project began as a fork of it and now continues independently, relicensed from GPL-3.0 to AGPL-3.0-only. AGPL adds one condition to GPL's: a modified version that users interact with over a network must offer those users its source. Releases before this one stay under GPL-3.0
+- 23ee589: export `StoredBlob` and `BlobUpload`, the types of the JSON around a blob: what a sync server returns from `/get/:uuid` and stores (`{ encrypted }`), and what it takes on `/update` (`{ uuid, encrypted }`)
+
+### Patch Changes
+
+- 23ee589: let the `fetch` option of `LoginSyncClient` return a `Response` as well as a promise of one. A Hono app's `app.fetch` returns either, so passing it to talk to a server in the same process no longer fails to typecheck
+
 ## 1.1.0
 
 ### Minor Changes
