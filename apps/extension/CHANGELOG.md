@@ -1,5 +1,20 @@
 # laplace-login-sync
 
+## 2.0.9
+
+### Patch Changes
+
+- 96fcd38: upgrade wxt to 0.21 and publish to the Chrome Web Store via API v2
+- 7d836b3: upload through the SDK's `LoginSyncClient`
+- 04e6416: replace pako with the built-in CompressionStream
+- ef00c0a: replace clsx and tailwind-merge with cn
+- e8bc79d: replace crypto-js with the built-in Web Crypto API
+- Updated dependencies [43149f2]
+- Updated dependencies [c9a0a2c]
+- Updated dependencies [86c968b]
+- Updated dependencies [7d836b3]
+  - @laplace.live/login-sync@1.1.0
+
 ## 2.0.8
 
 ### Patch Changes
