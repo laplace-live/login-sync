@@ -7,7 +7,7 @@ import { detectVersion } from './detect.js'
 import { LoginSyncError } from './errors.js'
 import { toPayload } from './payload.js'
 import { decryptV1, encryptV1, v1Passphrase } from './v1.js'
-import { decryptV2, encryptV2 } from './v2.js'
+import { decryptV2, encryptV2, padV2 } from './v2.js'
 
 export interface EncryptOptions {
   /**
@@ -38,7 +38,7 @@ export async function encrypt(
     case 1:
       return encryptV1(json, v1Passphrase(credentials))
     case 2:
-      return encryptV2(json, credentials)
+      return encryptV2(padV2(json), credentials)
     default:
       throw new LoginSyncError('unsupported_version', `cannot write protocol version ${String(options?.version)}`)
   }

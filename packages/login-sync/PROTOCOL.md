@@ -11,8 +11,8 @@ A user's secret is the token the extension displays: `<uuid>@<password>`.
 
 - `uuid`: ASCII letters and digits only. It's a short-uuid, not an RFC 4122 UUID. The server names the blob file after
   it and rejects anything outside `^[a-zA-Z0-9]+$`.
-- `password`: any non-empty string, always encoded as UTF-8. The extension generates 22 base58 characters (122 random
-  bits); older installs may hold hand-typed passwords.
+- `password`: any non-empty string, used as its UTF-8 bytes exactly as given: no trimming, no Unicode normalization.
+  The extension generates 22 base58 characters (122 random bits); older installs may hold hand-typed passwords.
 
 The uuid can't contain `@`, so split on the first `@`.
 
@@ -30,6 +30,9 @@ trying keys:
 
 Tags start at v2 because v1 predates them. `:` is outside the base64 alphabet, so a tagged blob can never be mistaken
 for v1. A tag is `v`, a decimal number without leading zeros, and `:`.
+
+Every version's base64 uses the standard alphabet and is written with padding. Readers decode it as `atob` does:
+padding optional, ASCII whitespace skipped.
 
 ## Plaintext
 
@@ -79,26 +82,44 @@ integrity check, a wrong key is indistinguishable from damage.
 The 16 hex characters cap the key at 64 bits whatever the password, and CBC detects no tampering. Read v1 for as long
 as v1 blobs may sit on a server; don't adopt it for anything new.
 
-## v2: PBKDF2-SHA256 and AES-256-GCM
+## v2: PBKDF2-SHA256, HKDF and AES-256-GCM
 
-1. `key` = PBKDF2-HMAC-SHA256 with
+1. `master` = PBKDF2-HMAC-SHA256 with
    - password: UTF-8 `password`
    - salt: UTF-8 `"laplace-login-sync/v2:" + uuid`
    - iterations: 100000
    - length: 32 bytes
-2. `nonce` = 12 random bytes, never reused under the same key
-3. AES-256-GCM with a 128-bit tag and additional authenticated data UTF-8 `"v2:" + uuid`
-4. `blob = "v2:" + base64(nonce ‖ ciphertext ‖ tag)`, standard alphabet with padding
+2. HKDF-SHA256 ([RFC 5869](https://www.rfc-editor.org/rfc/rfc5869)) over `master`, with an empty salt, derives two
+   32-byte values:
+   - `key`, with info UTF-8 `"laplace-login-sync/v2/encrypt"`
+   - `commitment`, with info UTF-8 `"laplace-login-sync/v2/commit"`
+3. `nonce` = 12 bytes from a cryptographically secure random generator. Never a counter: every browser holding the
+   token writes under the same key without coordinating.
+4. AES-256-GCM under `key`, with a 128-bit tag and additional authenticated data UTF-8 `"v2:" + uuid`
+5. `blob = "v2:" + base64(commitment ‖ nonce ‖ ciphertext ‖ tag)`
+
+Writers pad the plaintext with trailing spaces to a multiple of 1024 bytes. JSON allows whitespace after the value, so
+readers parse the padding away, whatever its length.
 
 Every parameter is fixed by the tag. Never read an iteration count or algorithm from a blob: anyone who can write to
 the server could then choose a weak or ruinously slow key derivation for every reader.
 
-A reader fails as `malformed` when the body isn't base64, is shorter than 28 bytes, or authenticates but isn't UTF-8
-JSON of the shape above. It fails as `bad_credentials` when the tag doesn't verify: wrong token, wrong uuid, or a
-modified blob.
+A reader checks the commitment before decrypting. It fails as `malformed` when the body isn't base64, is shorter than
+60 bytes, or authenticates but isn't UTF-8 JSON of the shape above. It fails as `bad_credentials` when the commitment
+doesn't match or the tag doesn't verify: wrong token, wrong uuid, or a modified blob.
 
 - **Uuid-bound salt.** It makes every token's key unique and lets readers derive the key once per token and cache it.
+- **Subkeys, not the PBKDF2 output.** The expensive derivation runs once, and each purpose gets its own key from it. A
+  new purpose, such as a delete token the server could check without ever seeing the password, takes a new label and
+  leaves the blob format alone.
+- **Key commitment.** GCM alone doesn't bind a ciphertext to one key: a crafted blob can authenticate under many
+  password guesses at once, so any reader whose reaction an attacker can observe becomes a fast guessing oracle. The
+  commitment pins each blob to the one key that wrote it. It hands an attacker nothing new, since the tag already
+  checks a guess at the same PBKDF2 cost, and it isn't secret, so it needs no constant-time comparison.
 - **Uuid in the authenticated data.** A blob can't be replayed under another user's uuid.
+- **Padding.** GCM ciphertext is exactly as long as its plaintext, and a public server hands blobs to anyone who knows
+  a uuid. Padding hides small changes, such as one cookie's length, for at most 1023 bytes per blob. Readers never
+  depend on the size, so writers can change it without a new version.
 - **100,000 iterations.** Cloudflare Workers rejects PBKDF2 above 100,000 iterations in production, and neither
   `wrangler dev` nor open-source workerd enforces the cap, so a higher count would pass local tests and break Worker
   readers in production. Generated passwords carry 122 random bits, so the stretching is defense in depth.

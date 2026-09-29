@@ -7,7 +7,8 @@ export const DEFAULT_SYNC_SERVER = 'https://login-sync.laplace.cn'
 /**
  * The protocol version uploads are written in. Readers can only open versions they already know, so this stays at 1
  * until every other reader (laplace-workers, laplace-cf-workers, and the crypto-js recipe in examples/playwright)
- * decrypts through `@laplace.live/login-sync`. The server already does. See its PROTOCOL.md.
+ * decrypts through a `@laplace.live/login-sync` release after 1.0.0, whose v2 predates the current format. The server
+ * already does. See its PROTOCOL.md.
  */
 export const PAYLOAD_VERSION: ProtocolVersion = 1
 

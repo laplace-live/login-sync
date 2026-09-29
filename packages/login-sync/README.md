@@ -77,22 +77,22 @@ Deriving a v2 key costs about 10 ms, so keys are cached per token (up to 256 tok
 Everything the SDK throws for bad input or a failed request is a `LoginSyncError`; an aborted request rejects with the
 signal's reason instead. Branch on `code`:
 
-| Code                  | Meaning                                                                                                     |
-| --------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `invalid_token`       | The token or credentials are unusable                                                                       |
-| `malformed`           | Not a login-sync blob, or its encoding or payload is broken                                                 |
-| `unsupported_version` | Written by a newer protocol version: upgrade this package                                                   |
-| `bad_credentials`     | The token can't open this blob, or the blob was damaged or tampered with                                    |
-| `not_found`           | The server has no blob for this uuid                                                                        |
-| `unauthorized`        | The server is in private mode, and `authKey` is missing or wrong                                            |
-| `network_error`       | No response arrived: the server is unreachable, or a browser blocked the request                            |
+| Code                  | Meaning                                                                                                   |
+| --------------------- | --------------------------------------------------------------------------------------------------------- |
+| `invalid_token`       | The token or credentials are unusable                                                                     |
+| `malformed`           | Not a login-sync blob, or its encoding or payload is broken                                               |
+| `unsupported_version` | Written by a newer protocol version: upgrade this package                                                 |
+| `bad_credentials`     | The token can't open this blob, or the blob was damaged or tampered with                                  |
+| `not_found`           | The server has no blob for this uuid                                                                      |
+| `unauthorized`        | The server is in private mode, and `authKey` is missing or wrong                                          |
+| `network_error`       | No response arrived: the server is unreachable, or a browser blocked the request                          |
 | `server_error`        | The server answered with an error, or something else answered, such as a proxy's error page. See `status` |
 
 ## Versions
 
-| Version | Format                                          | Status                                  |
-| ------- | ----------------------------------------------- | --------------------------------------- |
-| v1      | CryptoJS AES passphrase format (CookieCloud)    | What every extension build writes today |
-| v2      | PBKDF2-SHA256 (100,000 iterations), AES-256-GCM | Read by this SDK; not written yet       |
+| Version | Format                                                                | Status                                  |
+| ------- | --------------------------------------------------------------------- | --------------------------------------- |
+| v1      | CryptoJS AES passphrase format (CookieCloud)                          | What every extension build writes today |
+| v2      | PBKDF2-SHA256 (100,000 iterations), HKDF, AES-256-GCM, key commitment | Read by this SDK; not written yet       |
 
 [`vectors.json`](./vectors.json) ships with the package and holds known-answer vectors for ports to other languages.

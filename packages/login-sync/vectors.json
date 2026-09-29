@@ -31,37 +31,56 @@
       "name": "minimal payload",
       "uuid": "uuid1234",
       "password": "password12345",
-      "key": "5a1cffe2a8f61b466bbfbf0b622f383c8b6cdfc62255e2c9c2ff04f1db7913e4",
+      "master": "5a1cffe2a8f61b466bbfbf0b622f383c8b6cdfc62255e2c9c2ff04f1db7913e4",
+      "key": "20dd213b13bc43a1be76207d42bf50bfc68caf5e769c71fff67e5e5e30f4e0c3",
+      "commitment": "50446786eeac6c3c3c045774ae2d8dc9c6729e942de7b4e09a6d430ef464274f",
       "nonce": "000102030405060708090a0b",
       "plaintext": "{\"cookie_data\":{},\"local_storage_data\":{}}",
-      "blob": "v2:AAECAwQFBgcICQoLCClDYBfBe1bTKF/qCQ3uSrslhvBW+xm82OGPYcgSfkJR0j935cBdfprNPxKAbyKmfy/KpPabEcnzXg=="
+      "blob": "v2:UERnhu6sbDw8BFd0ri2NycZynpQt57Tgmm1DDvRkJ08AAQIDBAUGBwgJCgvbLhC7OG3nFYpmvaYu+tdkWfoDIlytBb36JY8Bm0QHkwBBDcCzi3fz2JEvXj1PkKKs4XO+0oMwELsA"
     },
     {
       "name": "multi-block payload with multi-byte UTF-8",
       "uuid": "uuid1234",
       "password": "password12345",
-      "key": "5a1cffe2a8f61b466bbfbf0b622f383c8b6cdfc62255e2c9c2ff04f1db7913e4",
+      "master": "5a1cffe2a8f61b466bbfbf0b622f383c8b6cdfc62255e2c9c2ff04f1db7913e4",
+      "key": "20dd213b13bc43a1be76207d42bf50bfc68caf5e769c71fff67e5e5e30f4e0c3",
+      "commitment": "50446786eeac6c3c3c045774ae2d8dc9c6729e942de7b4e09a6d430ef464274f",
       "nonce": "a1b2c3d4e5f60718293a4b5c",
       "plaintext": "{\"cookie_data\":{\"bilibili.com\":[{\"domain\":\".bilibili.com\",\"name\":\"SESSDATA\",\"value\":\"fake-session-value\",\"path\":\"/\"}]},\"local_storage_data\":{\"laplace.live\":{\"loginSyncOptionName\":\"拉普拉斯 🍪\"}}}",
-      "blob": "v2:obLD1OX2BxgpOktc6x0eL56iKzEBHA7x5QO59LE7Ilx0MY8os1tt6jAudJRfCqHF2SXlj9PChzD0MOGy4nFT80xyOCFGKhtG5byz9dnI+nfmxRSQ5UbaLHvu/iqVgaUPkbB0sCEFsZlLipdYZQxVHnpRhvtm8gBgDwWDrK9/18b9XBRkRnPozSjQAyL/bw+rOcN+2OA1CAwOyk1f7Ei1oF6U1HYmreqqCNmxc8eLq7c6Vj/erbS0Svd+fnAarzUhTJCPriFgEP/AThkF0LbXYghSIK37CtuSos+zkRFoRI5Wzqm7gg=="
+      "blob": "v2:UERnhu6sbDw8BFd0ri2NycZynpQt57Tgmm1DDvRkJ0+hssPU5fYHGCk6S1zhsxfK8b0HVfWqXzmvWApYDsar1BVN5Mjc21Ke/5tpe/d7J4D1aUYGTj6P8jBocr11WxePSUU0vD2ImobLvIG4AMRjZD+ulkGWM88cjugSQfpcDINtsSXMTZBuZ22M4BPHlB76UsWpdbMlYUJgeOi5PsDh37RLiaioSh3xdbkAWek4wzNi9cB0rNdcbWT1bQeVf2veTG0kIXsWOBjS4/V6b9KnMDRLD1yj2L5aYkmfihkUu18LKjA8L/PVpTL6UWpJQX0eXkBfG7g0QW0rxExg++Dkywcg47St"
     },
     {
       "name": "short-uuid credentials with full cookie records",
       "uuid": "sQ4b8nKx2PzT7wYc9dLmRe",
       "password": "Hj3Vn8Qw2Zr5Tk9Bx4Mc7p",
-      "key": "14ebb42cf806e9eb83fa971308468b81ac8956d33d376ff7e071cd08a8239f7d",
+      "master": "14ebb42cf806e9eb83fa971308468b81ac8956d33d376ff7e071cd08a8239f7d",
+      "key": "a8c13f3ac179515c93d3efa1c6d73dd78f0f4c3adc76a7dd9414f6e5ef016c4d",
+      "commitment": "ec5f885c1e53ee1987b9ae17593bdc06b9690cb99fe8c633d93b0ca2acbbec18",
       "nonce": "5d1f0c9e2b7a4c3e8f6d1a02",
       "plaintext": "{\"cookie_data\":{\"bilibili.com\":[{\"domain\":\".bilibili.com\",\"expirationDate\":1806969600,\"hostOnly\":false,\"httpOnly\":true,\"name\":\"SESSDATA\",\"path\":\"/\",\"sameSite\":\"unspecified\",\"secure\":true,\"session\":false,\"storeId\":\"0\",\"value\":\"fake%2Csession%2Cvalue\"},{\"domain\":\".bilibili.com\",\"expirationDate\":1806969600,\"hostOnly\":false,\"httpOnly\":false,\"name\":\"bili_jct\",\"path\":\"/\",\"sameSite\":\"unspecified\",\"secure\":false,\"session\":false,\"storeId\":\"0\",\"value\":\"fakecsrf0000000000000000000000\"}]},\"local_storage_data\":{\"laplace.live\":{\"loginSyncOptionSendDanmaku\":\"true\"}}}",
-      "blob": "v2:XR8Mnit6TD6PbRoCiFQGlNNzGxI1FLwu621OQTSNjmfWqJY3H/X5NDsrcC2ATWuJrW8OurUrSW/b1T9Bthim/YMZmm6YJF9ynqgHuk12qektbPMmvVyQoTJcJ6SQaeY/P8LelHFNsyV9qauXmGOwp79tqKwvMk3AmbAOuoDDkpDfjvzndS1RSooWOTp+NrIlPseKR3dritr0YQChj8wS6n64qMr8JuEpg3/VGRldo17hjLH3KIR1Sr9C6lM+sZjnPRbRRMtAspae/soInJ+IWRgTLO7PFdoCNVjIlGB72m1NZUKSqpwyJoGkrPDHquBF7TgmuP9co9G0+8a0YYFS33uk5kiGaDfG3WAga2OQ03MZxMVBV1T6xY0ypytw1FDqoUqtJCYjvemssPYD2rDjeruaZka+/ySoePEApc2ehAGllO9whTVRKxOj/iayGgc3hNYtDcuF6ePNNIKiQT0LSCcLDZPWuNBxM3W1Sa1So3ptBqEk+liKbtO7zXLKqpshnzGOQ396nhjikh0aQGoUD4FBFrpisbMsZdNE+wQoKPRXMYDRcwz4h7sM6yHMNewCfiwOi/5d2nr2tTe5AU8K7mgbsY0H1Z1Gc7zTq38Ls3ZWZ9TxLLlTMyMzrKuTabdy+vTv+3Lik0o8Wf5pBSXvEeGvhYZIb7oBReqXOHmVrP00vA6/0ICnpxFV6Yipb/py+dSoKZt4pcpwd2nVBm6YXadjoNCFMOkl4jlNxFk3N2KX2DQaS7otbOBKxuYFj2l5t2eemxZhqJSO/w=="
+      "blob": "v2:7F+IXB5T7hmHua4XWTvcBrlpDLmf6MYz2TsMoqy77BhdHwyeK3pMPo9tGgJgJkjjOUm637ozDesoZLcmSPIp0BXhs7rXIjt84N8arI/zNVDm7kfkIGJZdArgCub+37CETDPhc+JG07Fsl1TRn5CYSi0WyGxN3MGXqdeYRJ/03nWgrmnldM2lCc7jXmWMblhPIOGq8Mmbtpy7cSLfor9IGgSjQ0jFZCzS+QDRF4MTyBqDQuJWL6EubP2eqodQBsbtNTUa/+xoNbXVyZzEIcdobXk9p0IObf0kSOB/njYL++yxWMz+lgXiS7I+Jq3y/XhDMlukcSDPwheeWMYJGMpw60IOLFbr+lV/ny90Qqv5a0Wsl3fT5M2u8ovn/W0Wm/1sdEbRMkhAEKf6bOMVA2CzLEGSQ6IqeRtwW3U486Kjo70CuUF1ZYj7s/zAvHHaDasY5naSUxACU60/5YXNfO9sqMOBkH3h37ndZKdW5aNtZ4L+uL82wVCcb+Vg7u6vucyRwq1+/OmWL+WawXsNJh4uljE1cl8GiXre8D/XFAazeXCY4rHEq9NSmDegxtcBLAcfFJkxFJXcoH3Ahg0CZVVBFxYsbMXKjfDP2A1A7qBSZcWB9eGNXMgtJ63niIp/rEanTOLckjfX8SWHu4s32rWl1sGCRSyYedeXUYuLiZHEy9S1VJPRAS48toE5N7wNb0FnKQKHY7ztFxDD+HFPit9icn5rai40RHyv0w3dAkiQPhH2vUA3uVudqQ5bOY8v7SmlQSf3hRJPLhzwIQmUb88TyD41EWfYZy//QD7Ql9tkycvLxPrBCkFs5x2I"
     },
     {
       "name": "non-ASCII password containing @",
       "uuid": "abc123",
       "password": "pässwörd@🍪",
-      "key": "66d86b535627838b4b1206e949d5e0f6cf6a6feddddca36ce513294ecb858e7f",
+      "master": "66d86b535627838b4b1206e949d5e0f6cf6a6feddddca36ce513294ecb858e7f",
+      "key": "806b757369d79a2585f1f5452611ec5aa489667d820c0dbfa1c5f1139957df5f",
+      "commitment": "d7eb6406e7ec9d50b5bf72a721f305f2fed066a1a55f4a3709853e96f26a9199",
       "nonce": "ffeeddccbbaa998877665544",
       "plaintext": "{\"cookie_data\":{},\"local_storage_data\":{}}",
-      "blob": "v2:/+7dzLuqmYh3ZlVEAaKBMol68t6vT1U0UKDbG9TJklwwP3dpzsO6pDnSTD8tXv9W0bgQRrt/s4lvxDXO3C5EtFM0muPxiw=="
+      "blob": "v2:1+tkBufsnVC1v3KnIfMF8v7QZqGlX0o3CYU+lvJqkZn/7t3Mu6qZiHdmVURFxWFsD+A74+IkX749yA+2B3UmC4Lbu0cbpjXHpl067VHqSAdWR13eByw85yfP+fXSnLLPk7j+9Thj"
+    },
+    {
+      "name": "plaintext padded with trailing spaces to 1024 bytes",
+      "uuid": "uuid1234",
+      "password": "password12345",
+      "master": "5a1cffe2a8f61b466bbfbf0b622f383c8b6cdfc62255e2c9c2ff04f1db7913e4",
+      "key": "20dd213b13bc43a1be76207d42bf50bfc68caf5e769c71fff67e5e5e30f4e0c3",
+      "commitment": "50446786eeac6c3c3c045774ae2d8dc9c6729e942de7b4e09a6d430ef464274f",
+      "nonce": "0f0e0d0c0b0a090807060504",
+      "plaintext": "{\"cookie_data\":{},\"local_storage_data\":{}}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      ",
+      "blob": "v2:UERnhu6sbDw8BFd0ri2NycZynpQt57Tgmm1DDvRkJ08PDg0MCwoJCAcGBQQ7cMRrYmCJb/uFWw1n9xwm1iiekA80+mQxMxsCI9mm1JJxyPeTHMmvqk/TY+t5qsSptKkivsCvtfDfHge2O0oFq1fnsQMib97hFLrl0lazCYe3H7xjYmY9HyrDi9q8zgft8UBiLzSe8ZzTnZfCsATMaZHyPzP8Sn2Cv2M2dleXYnyBq6uiPOlVmkYW8h5S7ODQGG5a3kq1fr6MqYu7uRvILF+Ch+AM45Rqxm6Ha9XxgwsUmk4h0CWf2LVbboQq2Kj7UtnrlkEYLwrXuph/+/ivGbCLeWc3mG7KMowrDbyljNJ3h0CNXdiyNs+kA7fJuFzXx8Al3L4O04IhG1mrBVK8q+cOY31CTpPQu9gwXX3bPYbPkc+UsOdcQ7V1+oeYaC3FoM2lSA8jYNVUd8jybZ9DavZxeujYH11fzCgpW0Ij5e3JEE6g1oBdjokCOW7kAwRUeO4DzvMY9CtzBpE0/76uc17uTD2jw2HL7c8WbW7o/EVd1O8koZyv55Y8r+NkNoQWZT6GY3XkVrGzqYhfL+QG91FfkydEJvDNRjuSm0Z70qVbAshlCQmhU5VvJI0rPNWXQTWzNeevFdxCEC8OXBNwDN0uCxSoBZRI+IY390V7NhpiRhJWVoALG2iO+tiW2Yfi5Hv1ixep6fK3NnnQjukK0bB49fBDnhMnKTlMb1q6gijpa1x5+NFyU2tmH4tF/CGtVnOI2iPmi0NUXN653dpyRZF+NJEGNfijKYQtMSCZF9mbxX0pBUy4V7rnH+exiZ0Q8Vv3+J2hmCnypSFejNstKBMDEQuR2WAGihC9WMIHwX2e7Fg91MA4GfC3jotyW9GCo5CvfL6cLeMr1S2sRcNuMzat2TSKl3uhBABxrLl7ni8Li0xsczUoRTcoOdmRdt9MjX8D6YhhNeuuL9L6WELuzRI6wAV8jeCMBVhBJvnlCb/0ThkOPPWCkTGRBVAvgW7WX2LAKp4aKLZrdtIZDYK2n34+bWudeNIi9ldsc5sarhDeioekhDTtm1QY7AVDTU6eP45QpoUwlmv0lUsCo53w7HO9IHZGYnupwSlvK7dj9+jYgrWrz/wpdwVTg5iG6bbFyVIP24fzPi2taXuHHB0coe62RErEDUnHxDriSfbLaAT+I+hHeGOPtsGsDq3oRdLH1EwrEI/K/HMpJLFfPJndVRGii4ITtxIcRyhKKLroglS6tcWoDTZGHBEYqLNSOdS718yNP2h/tOEBvnmsqwoASD+SwHZEf+dmHy5uknv92dDusZHf4eXFj5z1SV8K4mGA1tn5GH53jgEBndSk60mfneWUC+JCltbpckzAjuBQIFtMVu5GE/N1QN8jpP7AJPxH83EiAt2Xdlxn7w4XzU6nq7zkszFLg3hAvMoxtUI9Cg=="
     }
   ],
   "errors": [
@@ -69,25 +88,25 @@
       "name": "v2 with the wrong password",
       "uuid": "uuid1234",
       "password": "wrong-password",
-      "blob": "v2:AAECAwQFBgcICQoLCClDYBfBe1bTKF/qCQ3uSrslhvBW+xm82OGPYcgSfkJR0j935cBdfprNPxKAbyKmfy/KpPabEcnzXg==",
+      "blob": "v2:UERnhu6sbDw8BFd0ri2NycZynpQt57Tgmm1DDvRkJ08AAQIDBAUGBwgJCgvbLhC7OG3nFYpmvaYu+tdkWfoDIlytBb36JY8Bm0QHkwBBDcCzi3fz2JEvXj1PkKKs4XO+0oMwELsA",
       "code": "bad_credentials"
     },
     {
       "name": "v2 opened under another uuid",
       "uuid": "uuid5678",
       "password": "password12345",
-      "blob": "v2:AAECAwQFBgcICQoLCClDYBfBe1bTKF/qCQ3uSrslhvBW+xm82OGPYcgSfkJR0j935cBdfprNPxKAbyKmfy/KpPabEcnzXg==",
+      "blob": "v2:UERnhu6sbDw8BFd0ri2NycZynpQt57Tgmm1DDvRkJ08AAQIDBAUGBwgJCgvbLhC7OG3nFYpmvaYu+tdkWfoDIlytBb36JY8Bm0QHkwBBDcCzi3fz2JEvXj1PkKKs4XO+0oMwELsA",
       "code": "bad_credentials"
     },
     {
       "name": "v2 with one ciphertext byte flipped",
       "uuid": "uuid1234",
       "password": "password12345",
-      "blob": "v2:AAECAwQFBgcICQoLCClDYBfBe1bSKF/qCQ3uSrslhvBW+xm82OGPYcgSfkJR0j935cBdfprNPxKAbyKmfy/KpPabEcnzXg==",
+      "blob": "v2:UERnhu6sbDw8BFd0ri2NycZynpQt57Tgmm1DDvRkJ08AAQIDBAUGBwgJCgvaLhC7OG3nFYpmvaYu+tdkWfoDIlytBb36JY8Bm0QHkwBBDcCzi3fz2JEvXj1PkKKs4XO+0oMwELsA",
       "code": "bad_credentials"
     },
     {
-      "name": "v2 too short to hold a nonce and a tag",
+      "name": "v2 too short to hold a commitment, a nonce and a tag",
       "uuid": "uuid1234",
       "password": "password12345",
       "blob": "v2:AAAA",
@@ -104,14 +123,14 @@
       "name": "v2 that authenticates but is not JSON",
       "uuid": "uuid1234",
       "password": "password12345",
-      "blob": "v2:DAsKCQgHBgUEAwIBD3XpO8eki9lNctKYMJmAJ8USblCafi4W",
+      "blob": "v2:UERnhu6sbDw8BFd0ri2NycZynpQt57Tgmm1DDvRkJ08MCwoJCAcGBQQDAgGtbqfrOdB6rgd0qblmUFC9ghIffxfdaxM=",
       "code": "malformed"
     },
     {
       "name": "v2 JSON without cookie_data",
       "uuid": "uuid1234",
       "password": "password12345",
-      "blob": "v2:EBESExQVFhcYGRobKt3nKhgjtiwGWFNOEI4PRiFUvDbgwivMRYUp8eYN3LeLo25a3P3ftew=",
+      "blob": "v2:UERnhu6sbDw8BFd0ri2NycZynpQt57Tgmm1DDvRkJ08QERITFBUWFxgZGhvlhzutEo8jpu0F1mLg54sjabapK5e2z8zaJ9IsHJdc4J4ruEU2YUKM7w==",
       "code": "malformed"
     },
     {
@@ -174,7 +193,21 @@
       "name": "v2 that authenticates but is not UTF-8",
       "uuid": "uuid1234",
       "password": "password12345",
-      "blob": "v2:ICEiIyQlJicoKSorAUpabrr46PZPeFW/KNYHv2vtVwDPyyNfC/23gg1FBXVMXDY55oimN35zkRtZwKNFVKeoCLzJxT9/p4FqXLHGiDQjkYME",
+      "blob": "v2:UERnhu6sbDw8BFd0ri2NycZynpQt57Tgmm1DDvRkJ08gISIjJCUmJygpKit8JfaZTodg/JiY+7GRiX6/CWMY",
+      "code": "malformed"
+    },
+    {
+      "name": "v2 with one commitment byte flipped",
+      "uuid": "uuid1234",
+      "password": "password12345",
+      "blob": "v2:UURnhu6sbDw8BFd0ri2NycZynpQt57Tgmm1DDvRkJ08AAQIDBAUGBwgJCgvbLhC7OG3nFYpmvaYu+tdkWfoDIlytBb36JY8Bm0QHkwBBDcCzi3fz2JEvXj1PkKKs4XO+0oMwELsA",
+      "code": "bad_credentials"
+    },
+    {
+      "name": "v2 one byte short of a commitment, a nonce and a tag",
+      "uuid": "uuid1234",
+      "password": "password12345",
+      "blob": "v2:UERnhu6sbDw8BFd0ri2NycZynpQt57Tgmm1DDvRkJ08AAQIDBAUGBwgJCgvbLhC7OG3nFYpmvaYu+tc=",
       "code": "malformed"
     }
   ]

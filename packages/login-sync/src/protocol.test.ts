@@ -51,8 +51,8 @@ describe('v1: CryptoJS passphrase format', () => {
   })
 })
 
-describe('v2: PBKDF2-SHA256 and AES-256-GCM', () => {
-  test.each(vectors.v2)('derives the documented key: $name', async ({ uuid, password, key }) => {
+describe('v2: PBKDF2-SHA256, HKDF and AES-256-GCM', () => {
+  test.each(vectors.v2)('derives the documented keys: $name', async ({ uuid, password, master, key, commitment }) => {
     // Restated from PROTOCOL.md rather than imported, so the vectors check the spec and not just the code
     const material = await crypto.subtle.importKey('raw', utf8.encode(password), 'PBKDF2', false, ['deriveBits'])
     const bits = await crypto.subtle.deriveBits(
@@ -60,13 +60,22 @@ describe('v2: PBKDF2-SHA256 and AES-256-GCM', () => {
       material,
       256
     )
-    expect(toHex(new Uint8Array(bits))).toBe(key)
+    expect(toHex(new Uint8Array(bits))).toBe(master)
+    const hkdf = await crypto.subtle.importKey('raw', bits, 'HKDF', false, ['deriveBits'])
+    const subkey = async (label: string) => {
+      const info = utf8.encode(`laplace-login-sync/v2/${label}`)
+      const params = { name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(0), info }
+      return toHex(new Uint8Array(await crypto.subtle.deriveBits(params, hkdf, 256)))
+    }
+    expect(await subkey('encrypt')).toBe(key)
+    expect(await subkey('commit')).toBe(commitment)
   })
 
   test.each(vectors.v2)('opens the blob: $name', async vector => {
     const { version, payload } = await decrypt(vector.blob, vector)
     expect(version).toBe(2)
-    expect(JSON.stringify(payload)).toBe(vector.plaintext)
+    // Parsing drops the trailing spaces v2 writers pad with
+    expect(JSON.stringify(payload)).toBe(vector.plaintext.trimEnd())
   })
 
   test.each(vectors.v2)('reproduces the blob from its nonce: $name', async vector => {
@@ -116,6 +125,15 @@ describe('encrypt', () => {
     expect(first).not.toBe(second)
     expect(detectVersion(first)).toBe(version)
     expect(await decrypt(first, credentials)).toEqual({ version, payload })
+  })
+
+  test('v2 pads the plaintext to a multiple of 1024 bytes', async () => {
+    for (const size of [0, 1000, 5000]) {
+      const padded = { ...payload, local_storage_data: { 'laplace.live': { loginSyncOptionText: 'x'.repeat(size) } } }
+      const blob = await encrypt(padded, credentials, { version: 2 })
+      // Less the commitment, the nonce and the tag
+      expect((fromBase64(blob.slice('v2:'.length)).length - 32 - 12 - 16) % 1024).toBe(0)
+    }
   })
 
   test('refuses a payload whose JSON a reader would reject', async () => {

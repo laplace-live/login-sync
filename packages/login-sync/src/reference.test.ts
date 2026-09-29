@@ -5,7 +5,7 @@
  */
 
 import { describe, expect, test } from 'bun:test'
-import { createDecipheriv, createHash, pbkdf2Sync } from 'node:crypto'
+import { createDecipheriv, createHash, hkdfSync, pbkdf2Sync } from 'node:crypto'
 
 import vectors from '../vectors.json' with { type: 'json' }
 
@@ -23,11 +23,14 @@ function openV1(blob: string, uuid: string, password: string): string {
 
 function openV2(blob: string, uuid: string, password: string): string {
   const data = Buffer.from(blob.slice('v2:'.length), 'base64')
-  const key = pbkdf2Sync(password, `laplace-login-sync/v2:${uuid}`, 100_000, 32, 'sha256')
-  const decipher = createDecipheriv('aes-256-gcm', key, data.subarray(0, 12))
+  const master = pbkdf2Sync(password, `laplace-login-sync/v2:${uuid}`, 100_000, 32, 'sha256')
+  const subkey = (label: string) =>
+    Buffer.from(hkdfSync('sha256', master, Buffer.alloc(0), `laplace-login-sync/v2/${label}`, 32))
+  if (!subkey('commit').equals(data.subarray(0, 32))) throw new Error('the commitment does not match')
+  const decipher = createDecipheriv('aes-256-gcm', subkey('encrypt'), data.subarray(32, 44))
   decipher.setAAD(Buffer.from(`v2:${uuid}`))
   decipher.setAuthTag(data.subarray(-16))
-  return Buffer.concat([decipher.update(data.subarray(12, -16)), decipher.final()]).toString('utf8')
+  return Buffer.concat([decipher.update(data.subarray(44, -16)), decipher.final()]).toString('utf8')
 }
 
 describe('node:crypto reference implementation', () => {

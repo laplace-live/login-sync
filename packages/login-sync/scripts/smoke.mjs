@@ -8,7 +8,8 @@ import { decrypt, encrypt, LoginSyncClient, parseToken, SUPPORTED_VERSIONS } fro
 const vectors = JSON.parse(await readFile(new URL('../vectors.json', import.meta.url), 'utf8'))
 for (const vector of [...vectors.v1.payload, ...vectors.v2]) {
   const { payload } = await decrypt(vector.blob, vector)
-  assert.equal(JSON.stringify(payload), vector.plaintext, vector.name)
+  // Parsing drops the trailing spaces v2 writers pad with
+  assert.equal(JSON.stringify(payload), vector.plaintext.trimEnd(), vector.name)
 }
 
 const credentials = parseToken('smoke123@correct-horse')
