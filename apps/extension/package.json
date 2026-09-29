@@ -2,7 +2,7 @@
   "name": "laplace-login-sync",
   "description": "LAPLACE Login Sync browser extension",
   "private": true,
-  "version": "2.1.0",
+  "version": "2.2.0",
   "author": "s@laplace.live",
   "license": "AGPL-3.0-only",
   "type": "module",

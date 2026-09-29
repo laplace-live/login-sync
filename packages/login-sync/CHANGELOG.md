@@ -1,5 +1,11 @@
 # @laplace.live/login-sync
 
+## 1.2.1
+
+### Patch Changes
+
+- 952303c: document that the extension now writes v2
+
 ## 1.2.0
 
 ### Minor Changes
