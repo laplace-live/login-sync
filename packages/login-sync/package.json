@@ -3,7 +3,7 @@
   "version": "1.1.0",
   "description": "Encrypt, decrypt, version-detect and sync LAPLACE Login Sync payloads",
   "author": "s@laplace.live",
-  "license": "GPL-3.0-only",
+  "license": "AGPL-3.0-only",
   "type": "module",
   "sideEffects": false,
   "homepage": "https://github.com/laplace-live/login-sync/tree/master/packages/login-sync#readme",

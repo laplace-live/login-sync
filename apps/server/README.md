@@ -50,4 +50,4 @@ Replacing the Express server with Hono gave a roughly 40% increase in performanc
 
 ## License
 
-GPL-3.0
+AGPL-3.0-only

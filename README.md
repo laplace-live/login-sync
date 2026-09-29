@@ -1,6 +1,6 @@
 # LAPLACE Login Sync
 
-LAPLACE Login Sync based on CookieCloud. View the [source repo](https://github.com/easychen/CookieCloud) for the original info.
+LAPLACE Login Sync began as a fork of [CookieCloud](https://github.com/easychen/CookieCloud). On September 29, 2026, it detached from CookieCloud's repository and became an independent project.
 
 ## Changes
 
@@ -32,3 +32,7 @@ bun install   # from the repo root
 cd apps/server
 bun run dev
 ```
+
+## License
+
+[AGPL-3.0-only](LICENSE), since the detach from CookieCloud on September 29, 2026. Releases made before then were GPL-3.0 and stay so.

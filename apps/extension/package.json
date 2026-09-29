@@ -4,7 +4,7 @@
   "private": true,
   "version": "2.0.9",
   "author": "s@laplace.live",
-  "license": "GPLv3",
+  "license": "AGPL-3.0-only",
   "type": "module",
   "scripts": {
     "dev": "wxt",
