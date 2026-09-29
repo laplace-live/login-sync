@@ -1,6 +1,6 @@
 {
   "name": "@laplace.live/login-sync",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Encrypt, decrypt, version-detect and sync LAPLACE Login Sync payloads",
   "author": "s@laplace.live",
   "license": "AGPL-3.0-only",
