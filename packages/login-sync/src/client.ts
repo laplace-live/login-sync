@@ -15,15 +15,26 @@ export interface LoginSyncClientOptions {
   /** Sent with every request, e.g. a token for a firewall in front of the server */
   headers?: HeadersInit
   /**
-   * Replaces the global `fetch`, e.g. to cache responses or to call a Cloudflare service binding. It's called without a
-   * `this`, so pass a bound method or an arrow function
+   * Replaces the global `fetch`, e.g. to cache responses, to call a Cloudflare service binding, or to hand requests to an
+   * app in the same process, whose handler, like a Hono app's `app.fetch`, may return a `Response` without a promise.
+   * It's called without a `this`, so pass a bound method or an arrow function
    */
-  fetch?: (url: string, init: RequestInit) => Promise<Response>
+  fetch?: (url: string, init: RequestInit) => Response | Promise<Response>
 }
 
 export interface RequestOptions {
   /** Cancels the request, e.g. `AbortSignal.timeout(10_000)`. An abort rejects with the signal's reason */
   signal?: AbortSignal
+}
+
+/** A blob as the sync server stores it, and as `GET /get/:uuid` returns it. Open `encrypted` with `decrypt`. */
+export interface StoredBlob {
+  encrypted: string
+}
+
+/** The body `POST /update` takes: a blob and the uuid to store it under. */
+export interface BlobUpload extends StoredBlob {
+  uuid: string
 }
 
 const DEFAULT_BASE_URL = 'https://login-sync.laplace.cn'
@@ -99,7 +110,7 @@ export class LoginSyncClient {
         method: 'POST',
         // The server gunzips every upload, whatever this header says
         headers: { 'Content-Type': 'application/json', 'Content-Encoding': 'gzip' },
-        body: await gzip(JSON.stringify({ uuid: credentials.uuid, encrypted })),
+        body: await gzip(JSON.stringify({ uuid: credentials.uuid, encrypted } satisfies BlobUpload)),
       },
       options
     )

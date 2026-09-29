@@ -19,7 +19,7 @@ apps/extension/       the shipped extension, package `laplace-login-sync` — WX
 apps/server/          the shipped server, package `laplace-login-sync-server` — Bun + Hono
   src/index.ts          every route lives here, decrypting through the SDK · utils/timingSafeEqual.ts
 packages/login-sync/  the payload protocol SDK, package `@laplace.live/login-sync` — web platform only, no dependencies
-  src/                  client.ts (LoginSyncClient, the server's fetch client) · protocol.ts (encrypt/decrypt) · detect.ts (version from the blob prefix) · v1.ts · v2.ts · credentials.ts · payload.ts
+  src/                  client.ts (LoginSyncClient, the server's fetch client, and StoredBlob/BlobUpload, the JSON it exchanges) · protocol.ts (encrypt/decrypt) · detect.ts (version from the blob prefix) · v1.ts · v2.ts · credentials.ts · payload.ts
   PROTOCOL.md           the spec · vectors.json frozen known-answer vectors every implementation must pass
 examples/             Playwright recipe for consuming a synced session
 ```
@@ -97,7 +97,7 @@ The SDK in `packages/login-sync/` implements the format; the extension encrypts 
 
 ### Server: flat files, four routes, one module
 
-Everything lives in `apps/server/src/index.ts`; storage is `apps/server/data/<uuid>.json` holding `{ encrypted }` (gitignored, a Docker volume in production; `LAPLACE_LOGIN_SYNC_DATA_DIR` overrides the directory, and the tests point it at a temporary one). No database.
+Everything lives in `apps/server/src/index.ts`; storage is `apps/server/data/<uuid>.json` holding `{ encrypted }`, the SDK's `StoredBlob` (gitignored, a Docker volume in production; `LAPLACE_LOGIN_SYNC_DATA_DIR` overrides the directory, and the tests point it at a temporary one). No database.
 
 - `POST /update` — 4 MB `bodyLimit`, writes the file and reads it back to confirm. `unzipSync`'s `maxOutputLength` caps the inflated body too, because `bodyLimit` only ever sees the compressed one: uncapped, a few MB of zeros inflates to gigabytes in one synchronous call. That cap is 8 MB, twice `bodyLimit`, and can't be lowered to match it: base64 spends 8 bits on every 6 of ciphertext, so gzip shrinks a real upload to about 3/4 of its size, and a body just under 4 MB inflates to 5.3 MB. Over the cap answers 413, not 400.
 - `GET /get/:uuid` — returns the ciphertext untouched, `Cache-Control: private, max-age=5`. Browsers honor that, so a read from a browser can be 5 s stale.

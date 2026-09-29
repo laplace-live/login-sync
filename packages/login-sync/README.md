@@ -54,6 +54,8 @@ Each method also takes a `signal`, e.g. `client.pull(credentials, { signal: Abor
 - An `authKey` travels in a POST body, never in the URL. Without one, `pull` is a GET, and browsers may answer it from
   their cache for up to 5 seconds, as the server's `Cache-Control` allows. For fresh reads, pass
   `fetch: (url, init) => fetch(url, { ...init, cache: "no-store" })`.
+- `fetch` may return a `Response` as well as a promise of one, so a server app in the same process can answer directly,
+  e.g. `fetch: (url, init) => app.fetch(new Request(url, init))` for a Hono app.
 
 ## Blobs
 
@@ -71,6 +73,9 @@ const blob = await encrypt(payload, credentials, { version: 1 });
 There's no default, so upgrading the SDK never changes the format you write.
 
 Deriving a v2 key costs about 10 ms, so keys are cached per token (up to 256 tokens).
+
+The JSON around a blob is exported as types: `StoredBlob` is what `GET /get/:uuid` returns and the server stores,
+`{ encrypted }`, and `BlobUpload` is the body `POST /update` takes, `{ uuid, encrypted }`.
 
 ## Errors
 

@@ -1,4 +1,4 @@
-export type { LoginSyncClientOptions, RequestOptions } from './client.js'
+export type { BlobUpload, LoginSyncClientOptions, RequestOptions, StoredBlob } from './client.js'
 export type { Credentials } from './credentials.js'
 export type { ProtocolVersion } from './detect.js'
 export type { LoginSyncErrorCode } from './errors.js'

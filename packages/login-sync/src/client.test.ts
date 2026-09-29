@@ -30,6 +30,24 @@ async function gunzipJson(request: Request): Promise<unknown> {
   return JSON.parse(await new Response(stream).text())
 }
 
+describe('fetch option', () => {
+  test('accepts a handler that answers without a promise, like a Hono app', async () => {
+    const encrypted = await encrypt(payload, credentials, { version: 2 })
+    const client = new LoginSyncClient({ baseURL: 'https://sync.example', fetch: () => Response.json({ encrypted }) })
+    expect(await client.pull(credentials)).toEqual({ version: 2, payload })
+  })
+
+  test('reports a handler that throws before answering as a network_error', async () => {
+    const client = new LoginSyncClient({
+      baseURL: 'https://sync.example',
+      fetch: () => {
+        throw new TypeError('no route')
+      },
+    })
+    await expect(client.pull(credentials)).rejects.toMatchObject({ code: 'network_error' })
+  })
+})
+
 describe('baseURL', () => {
   test('defaults to login-sync.laplace.cn through the global fetch', async () => {
     // Bun's fetch type carries `preconnect`, so the stub needs one too
