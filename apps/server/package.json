@@ -1,0 +1,24 @@
+{
+  "name": "laplace-login-sync-server",
+  "version": "1.0.7",
+  "private": true,
+  "description": "LAPLACE Login Sync Server",
+  "type": "module",
+  "main": "index.ts",
+  "scripts": {
+    "dev": "bun run --hot src/index.ts",
+    "build": "bun build src/index.ts --target bun --outdir ./build",
+    "start": "bun run src/index.ts"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "^0.9.1",
+    "hono": "^4.13.10",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.14",
+    "@types/bun": "^1.4.2",
+    "tinybench": "^4.1.0"
+  },
+  "packageManager": "bun@1.2.2"
+}

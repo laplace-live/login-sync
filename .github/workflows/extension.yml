@@ -12,7 +12,12 @@ on:
     branches:
       - "master"
     paths:
-      - "extension/**"
+      - "apps/extension/**"
+      # The extension bundles the SDK's source, and nothing else from the package
+      - "packages/login-sync/src/**"
+      # Every workspace installs from the root manifest and lockfile
+      - "package.json"
+      - "bun.lock"
       - ".github/workflows/extension.yml"
   workflow_dispatch:
 
@@ -22,7 +27,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./extension
+        working-directory: ./apps/extension
 
     steps:
       - name: Checkout
@@ -46,7 +51,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: extension-builds
-          path: extension/.output/*.zip
+          path: apps/extension/.output/*.zip
           # WXT writes to `.output/`, which actions/upload-artifact treats as
           # a hidden directory and excludes from the artifact by default
           # (since v4.4). Without this, the upload silently uploads nothing
@@ -67,7 +72,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./extension
+        working-directory: ./apps/extension
 
     steps:
       - name: Checkout
@@ -85,17 +90,26 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: extension-builds
-          path: extension/.output/
+          path: apps/extension/.output/
 
       # `wxt submit` wraps publish-browser-extension, which reads these env vars:
       # https://github.com/aklinker1/publish-browser-extension/blob/main/docs/config-reference.md
       # Run `bun x wxt submit init` locally to generate the secrets.
       - name: Submit to stores
         env:
-          # Service-account auth; CWS API v1.1 stops working on 2026-10-15
+          # CWS API v2 authenticates as a Google Cloud service account (v1.1 ends 2026-10-15).
+          # Setup: https://developer.chrome.com/docs/webstore/service-accounts
+          # 1. Cloud console: enable "Chrome Web Store API"; create a service account (no
+          #    roles); on its Keys tab, Add key > Create new key > JSON. Orgs created since
+          #    2024-05-03 block that by default (policy iam.disableServiceAccountKeyCreation).
+          # 2. CWS Developer Dashboard: pick this item's publisher (top-right), open its Settings
+          #    page (older docs: "Account"), add the email under "Service account". Needs the
+          #    Editor or Admin role; one per publisher, and it can publish all its items.
           CHROME_API_VERSION: v2
           CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          # Dashboard > Publisher > Settings, or the UUID in the devconsole/<id> URL
           CHROME_PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
+          # `client_email` and `private_key` from the JSON key
           CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL: ${{ secrets.CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL }}
           CHROME_SERVICE_ACCOUNT_PRIVATE_KEY: ${{ secrets.CHROME_SERVICE_ACCOUNT_PRIVATE_KEY }}
           CHROME_SKIP_SUBMIT_REVIEW: false
@@ -140,7 +154,7 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: extension-builds
-          path: extension/.output/
+          path: apps/extension/.output/
 
       # Create the release if it doesn't already exist. The legacy
       # extension.yml workflow may have created it on the same tag, in which
@@ -159,5 +173,5 @@ jobs:
         # `--clobber` so re-runs (or coexistence with the legacy workflow)
         # don't fail when filenames overlap.
         run: >-
-          gh release upload '${{ github.ref_name }}' extension/.output/*.zip
+          gh release upload '${{ github.ref_name }}' apps/extension/.output/*.zip
           --clobber --repo '${{ github.repository }}'

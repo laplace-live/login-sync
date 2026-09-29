@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  // Inherits the repo-root biome.jsonc and overrides only what differs. `root: false` marks this as a nested config, so
+  // running Biome from the root doesn't find two root configurations and refuse to start
+  "root": false,
+  "extends": "//",
+  "linter": {
+    // The root enables these for the extension; nothing here is React or Next.js
+    "domains": {
+      "next": "none",
+      "react": "none"
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "name": "@laplace.live/login-sync",
+  "version": "1.0.0",
+  "description": "Encrypt, decrypt, version-detect and sync LAPLACE Login Sync payloads",
+  "author": "s@laplace.live",
+  "license": "GPL-3.0-only",
+  "type": "module",
+  "sideEffects": false,
+  "homepage": "https://github.com/laplace-live/login-sync/tree/master/packages/login-sync#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/laplace-live/login-sync.git",
+    "directory": "packages/login-sync"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./vectors.json": "./vectors.json",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "PROTOCOL.md",
+    "vectors.json"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "compile": "tsc --noEmit",
+    "prepack": "bun run build",
+    "smoke": "node scripts/smoke.mjs",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.14",
+    "@types/bun": "^1.4.2",
+    "typescript": "^5.9.3"
+  }
+}

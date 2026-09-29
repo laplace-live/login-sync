@@ -13,19 +13,22 @@ LAPLACE Login Sync based on CookieCloud. View the [source repo](https://github.c
 ## Working on the extension
 
 ```bash
-# install (run from the repo root, the extension lives in the workspace)
+# install every app and package (run from the repo root)
 bun install
 
 # dev / build / zip
 bun run --filter laplace-login-sync dev
 bun run --filter laplace-login-sync build
 bun run --filter laplace-login-sync zip
+
+# the Firefox build, into apps/extension/.output/firefox-mv2/
+bun run --filter laplace-login-sync build:firefox
 ```
 
 ## Working on the server
 
 ```bash
-cd server
-bun install
+bun install   # from the repo root
+cd apps/server
 bun run dev
 ```

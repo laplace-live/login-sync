@@ -1,0 +1,42 @@
+{
+  // https://bun.sh/docs/typescript#suggested-compileroptions
+  "compilerOptions": {
+    // Enable latest features. DOM is for the SDK source that `paths` pulls in below: it's typed against the web
+    // platform, and names like `KeyUsage` exist only in lib.dom
+    "lib": ["ESNext", "DOM"],
+    // TypeScript 6 and later load no @types packages unless listed here. @types/bun brings Node's types with it
+    "types": ["bun"],
+    "target": "ESNext",
+    "module": "Preserve",
+    "moduleDetection": "force",
+    "jsx": "react-jsx",
+    "allowJs": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "noEmit": true,
+
+    // Best practices
+    "strict": true,
+    "skipLibCheck": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+
+    // Some stricter flags (disabled by default)
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noPropertyAccessFromIndexSignature": false,
+
+    // hono customs
+    "jsxImportSource": "hono/jsx",
+
+    // The SDK comes from its source in this repo, not from npm. Bun honors `paths` at runtime, and the Dockerfile places
+    // the source where this resolves in the image as well
+    "paths": {
+      "@laplace.live/login-sync": ["../../packages/login-sync/src/index.ts"]
+    }
+  }
+}

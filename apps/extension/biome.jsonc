@@ -1,0 +1,7 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  // Inherits every setting from the repo-root biome.jsonc. `root: false` marks this as a nested config, so running
+  // Biome from the root doesn't find two root configurations and refuse to start
+  "root": false,
+  "extends": "//"
+}

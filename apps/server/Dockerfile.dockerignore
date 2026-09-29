@@ -1,0 +1,16 @@
+# The build context is the whole repo (see Dockerfile). BuildKit reads this file instead of a root .dockerignore because
+# it sits next to the Dockerfile. Send only what the image uses, and never local secrets or users' blobs.
+*
+# The root lockfile and every workspace manifest, for the frozen install. The globs follow the root `workspaces`
+!package.json
+!bun.lock
+!apps/*/package.json
+!packages/*/package.json
+# The server itself, and the SDK source it imports
+!apps/server
+!packages/login-sync/src
+apps/server/node_modules
+apps/server/data
+apps/server/build
+apps/server/.env*
+packages/login-sync/src/**/*.test.ts

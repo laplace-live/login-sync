@@ -26,7 +26,14 @@ jobs:
 
       - run: bun install --frozen-lockfile
 
-      - run: sudo npm install -g npm@latest
+      # `changeset publish` publishes @laplace.live/login-sync with `npm publish` over npm trusted publishing (OIDC,
+      # hence `id-token: write`), which needs Node >= 22.14 and npm >= 11.5.1. Upgrade the npm that setup-node puts on
+      # PATH; `sudo npm` would upgrade the runner's system copy instead.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - run: npm install -g npm@latest
 
       # Release writes (the version PR, tags and GitHub Releases) use a GitHub
       # App token instead of `GITHUB_TOKEN`. Events caused by `GITHUB_TOKEN`

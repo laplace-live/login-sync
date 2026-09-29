@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // No Bun globals: the published code has to run in browsers and Cloudflare Workers too, so anything outside the
+    // web platform (Buffer, node:*) must fail the build rather than a consumer's runtime
+    "types": [],
+    "noEmit": false,
+    "declaration": true,
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "exclude": ["src/**/*.test.ts"]
+}
