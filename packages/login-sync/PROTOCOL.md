@@ -1,4 +1,4 @@
-# Login Sync payload protocol
+# Login Sync Protocol
 
 How LAPLACE Login Sync encrypts a browser's cookies so that the sync server only ever stores ciphertext. The extension
 writes blobs; the server's password-taking routes and the LAPLACE workers read them.
@@ -16,7 +16,7 @@ A user's secret is the token the extension displays: `<uuid>@<password>`.
 
 The uuid can't contain `@`, so split on the first `@`.
 
-## Blob and version detection
+## Blob and Version Detection
 
 The server stores one blob per uuid as `{ "encrypted": "<blob>" }`. Its version is read from its prefix, never by
 trying keys:
@@ -63,7 +63,7 @@ Every version encrypts the UTF-8 bytes of one JSON object:
 The server's `/remove` accepts a decrypted `cookie_data` as proof that the caller knows the password, so the key names
 are part of the contract. Readers pass unknown top-level fields through.
 
-## v1: CryptoJS passphrase format
+## v1: CryptoJS Passphrase Format
 
 What CookieCloud defined and every extension build to date writes, equal to
 `CryptoJS.AES.encrypt(json, passphrase).toString()`:
@@ -82,7 +82,7 @@ integrity check, a wrong key is indistinguishable from damage.
 The 16 hex characters cap the key at 64 bits whatever the password, and CBC detects no tampering. Read v1 for as long
 as v1 blobs may sit on a server; don't adopt it for anything new.
 
-## v2: PBKDF2-SHA256, HKDF and AES-256-GCM
+## v2: PBKDF2-SHA256, HKDF and AES-256-GCM Format
 
 1. `master` = PBKDF2-HMAC-SHA256 with
    - password: UTF-8 `password`
@@ -133,7 +133,7 @@ doesn't match or the tag doesn't verify: wrong token, wrong uuid, or a modified 
 | `unsupported_version` | A tag newer than the reader: the reader needs an upgrade, not a new token |
 | `bad_credentials`     | The token can't open this blob, or the blob was damaged or tampered with  |
 
-## Changing the protocol
+## Changing the Protocol
 
 - **Never change an existing version.** Different parameters get a new tag.
 - **Readers ship before writers.** Detection lets a new reader open old blobs; nothing lets an old reader open new
