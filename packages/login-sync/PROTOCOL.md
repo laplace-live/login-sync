@@ -1,4 +1,4 @@
-# Login Sync Protocol
+# LAPLACE Login Sync Protocol
 
 How LAPLACE Login Sync encrypts a browser's cookies so that the sync server only ever stores ciphertext. The extension
 writes blobs; the server's password-taking routes and the LAPLACE workers read them.
