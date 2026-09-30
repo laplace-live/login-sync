@@ -10,6 +10,17 @@ LAPLACE Login Sync began as a fork of [CookieCloud](https://github.com/easychen/
 - Extension: Simpler UI
 - Extension: i18n
 
+## Browser support
+
+- Chrome 148+ (Windows 10+, macOS 12+)
+- Microsoft Edge 148+ (Windows 10+, macOS 12+)
+- Firefox 140+ (Windows 10+, macOS 10.15+)
+
+The systems in parentheses are the oldest those browser versions run on. Other Chromium-based browsers need Chromium 148 or later. Safari and Firefox for Android aren't supported.
+
+- Chrome and Edge 148 are the first versions where the background script can reply to the popup by returning a Promise. On older versions the reply never arrives, so a manual sync from the popup shows an error even though the upload still runs.
+- Firefox 140 is the first version whose install prompt asks for consent to the data the extension collects, its authentication info. Older versions install it without asking, or refuse it as corrupted.
+
 ## Working on the extension
 
 ```bash

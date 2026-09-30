@@ -30,12 +30,19 @@ export default defineConfig({
   vite: () => ({
     plugins: [tailwindcss()],
   }),
-  manifest: {
+  manifest: ({ browser }) => ({
     name: '__MSG_appTitle__',
     description: '__MSG_appDesc__',
     default_locale: 'en',
     host_permissions: ['*://*.bilibili.com/', 'https://bilibili.com/', '*://*.laplace.live/', 'https://laplace.live/'],
     permissions: ['cookies', 'tabs', 'storage', 'alarms', 'unlimitedStorage'],
+    // Chromium builds only; Edge reads it too, since its major version tracks
+    // Chromium's. 148 is the first version where a runtime.onMessage listener
+    // can reply by returning a Promise, which is how background.ts answers the
+    // popup. Raising it silently stops updates for users on older versions, and
+    // the README's Browser support list must match.
+    // https://developer.chrome.com/docs/extensions/reference/manifest/minimum-chrome-version
+    ...(browser === 'firefox' ? {} : { minimum_chrome_version: '148' }),
     // Firefox built-in data consent (required for new submissions from 2025-11-03).
     // The extension's purpose is to sync login/session cookies to the user's own
     // sync server, so authentication info is required for the extension to work.
@@ -48,10 +55,16 @@ export default defineConfig({
         // each upload, which would break updates for installed users.
         // https://mzl.la/3PLZYdo
         id: '{bea1d1bb-2ed3-46bc-92ca-34bcdb3baa85}',
+        // 140 is the first version with the built-in consent above; older ones
+        // install the add-on without asking. Firefox for Android falls back to
+        // this value, so AMO's linter warns that Android needs 142 for that
+        // consent. The add-on isn't listed for Android, and a `gecko_android`
+        // key would opt it in, so leave the warning. The README must match.
+        strict_min_version: '140.0',
         data_collection_permissions: {
           required: ['authenticationInfo'],
         },
       },
     },
-  },
+  }),
 })
