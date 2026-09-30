@@ -1,5 +1,11 @@
 # laplace-login-sync
 
+## 2.3.0
+
+### Minor Changes
+
+- 9e8e3d3: require Chrome and Edge 148 or later, and Firefox 140 or later. Older browsers can no longer install the extension, and existing installs on them stop receiving updates
+
 ## 2.2.0
 
 ### Minor Changes
