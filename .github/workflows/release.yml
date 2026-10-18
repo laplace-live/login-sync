@@ -63,7 +63,7 @@ jobs:
           # changelog entry as the release body. Per-package publish
           # workflows append their built artifacts to these releases.
           create-github-releases: true
-          commit-message: "chore: version packages"
+          commit-message: "chore: version packages [skip ci]"
           pr-title: "chore: version packages"
           # Used for the version PR, tags and GitHub Releases, so the tags
           # trigger extension.yml. v2 reads the token only from this input,
