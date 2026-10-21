@@ -163,9 +163,11 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           sh .github/scripts/changelog-section.sh apps/extension/CHANGELOG.md "${TAG##*@}" > notes.md
-          if [ ! -s notes.md ]; then
-            echo "::error::No CHANGELOG entry for $TAG"
-            exit 1
-          fi
-          # With assets, gh creates a draft, uploads them, then publishes.
-          gh release create "$TAG" apps/extension/.output/*.zip --verify-tag --title "$TAG" --notes-file notes.md
+          # An immutable release can't take a zip later, so refuse to publish without all of them.
+          for kind in chrome firefox sources; do
+            if ! ls apps/extension/.output/*-"$kind".zip >/dev/null 2>&1; then
+              echo "::error::Missing the $kind zip"
+              exit 1
+            fi
+          done
+          sh .github/scripts/publish-release.sh "$TAG" notes.md apps/extension/.output/*.zip
