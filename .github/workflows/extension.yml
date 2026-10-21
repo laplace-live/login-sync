@@ -21,6 +21,9 @@ on:
       - ".github/workflows/extension.yml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -135,9 +138,9 @@ jobs:
     name: GitHub Release
     runs-on: ubuntu-latest
 
-    # Same gate as the publish job: only `laplace-login-sync@*` tags. Releases
-    # are immutable once published, so this publishes the release whole, with
-    # the CHANGELOG notes and the zips attached.
+    # Same gate as the publish job: only `laplace-login-sync@*` tags. The only
+    # job with write access: releases are immutable once published, so this
+    # publishes the release with every zip attached at once.
     if: startsWith(github.ref, 'refs/tags/laplace-login-sync@')
 
     needs:
