@@ -137,6 +137,10 @@ jobs:
   github-release:
     name: GitHub Release
     runs-on: ubuntu-latest
+    # One publisher per tag: a rerun queues behind a running one instead of racing over the same draft.
+    concurrency:
+      group: publish-${{ github.ref }}
+      cancel-in-progress: false
 
     # Same gate as the publish job: only `laplace-login-sync@*` tags. The only
     # job with write access: releases are immutable once published, so this
