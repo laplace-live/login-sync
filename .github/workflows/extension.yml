@@ -21,6 +21,9 @@ on:
       - ".github/workflows/extension.yml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -134,9 +137,14 @@ jobs:
   github-release:
     name: GitHub Release
     runs-on: ubuntu-latest
+    # One publisher per tag: a rerun queues behind a running one instead of racing over the same draft.
+    concurrency:
+      group: publish-${{ github.ref }}
+      cancel-in-progress: false
 
-    # Same gate as the publish job: only attach extension zips to
-    # `laplace-login-sync@*` tag releases.
+    # Same gate as the publish job: only `laplace-login-sync@*` tags. The only
+    # job with write access: releases are immutable once published, so this
+    # publishes the release with every zip attached at once.
     if: startsWith(github.ref, 'refs/tags/laplace-login-sync@')
 
     needs:
@@ -156,22 +164,17 @@ jobs:
           name: extension-builds
           path: apps/extension/.output/
 
-      # Create the release if it doesn't already exist. The legacy
-      # extension.yml workflow may have created it on the same tag, in which
-      # case we just append the v2 zips to it below.
-      - name: Create GitHub Release
+      - name: Publish the release with its zips
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
         run: |
-          if ! gh release view "${{ github.ref_name }}" --repo "${{ github.repository }}" >/dev/null 2>&1; then
-            gh release create "${{ github.ref_name }}" --notes "" --repo "${{ github.repository }}"
-          fi
-
-      - name: Upload artifacts to GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        # `--clobber` so re-runs (or coexistence with the legacy workflow)
-        # don't fail when filenames overlap.
-        run: >-
-          gh release upload '${{ github.ref_name }}' apps/extension/.output/*.zip
-          --clobber --repo '${{ github.repository }}'
+          sh .github/scripts/changelog-section.sh apps/extension/CHANGELOG.md "${TAG##*@}" > notes.md
+          # An immutable release can't take a zip later, so refuse to publish without all of them.
+          for kind in chrome firefox sources; do
+            if ! ls apps/extension/.output/*-"$kind".zip >/dev/null 2>&1; then
+              echo "::error::Missing the $kind zip"
+              exit 1
+            fi
+          done
+          sh .github/scripts/publish-release.sh "$TAG" notes.md apps/extension/.output/*.zip

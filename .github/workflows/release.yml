@@ -55,17 +55,51 @@ jobs:
           permission-pull-requests: write
 
       - name: Create release PR or push tags
+        id: changesets
         uses: changesets/action@v2
         with:
           publish-script: bun run release
           version-script: bun run version
-          # Create one GitHub Release per package tag, with the new
-          # changelog entry as the release body. Per-package publish
-          # workflows append their built artifacts to these releases.
-          create-github-releases: true
+          # Releases are immutable once published, so nothing can be attached
+          # afterwards: the action only pushes tags, and each release is
+          # published whole, by github-releases below or, with its zips, by
+          # extension.yml, which the pushed extension tag fires.
+          create-github-releases: false
           commit-message: "chore: version packages [skip ci]"
           pr-title: "chore: version packages"
-          # Used for the version PR, tags and GitHub Releases, so the tags
-          # trigger extension.yml. v2 reads the token only from this input,
+          # Used for the version PR and tags, so the tags trigger
+          # extension.yml. v2 reads the token only from this input,
           # not from the `GITHUB_TOKEN` env var.
           github-token: ${{ steps.app-token.outputs.token }}
+
+  # Reconciles rather than trusting this run's publish output, so a rerun or the
+  # next push recovers a release that failed to publish.
+  github-releases:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Publish releases for tagged versions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # The extension's release is published by extension.yml, with its zips attached.
+          for manifest in apps/*/package.json packages/*/package.json; do
+            name=$(jq -r .name "$manifest")
+            version=$(jq -r .version "$manifest")
+            tag="$name@$version"
+            [ "$name" = "laplace-login-sync" ] && continue
+            status=0
+            git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null || status=$?
+            # 2: not tagged yet. Anything else is a failed lookup, which must not pass for "nothing to release".
+            if [ "$status" -eq 2 ]; then continue; fi
+            if [ "$status" -ne 0 ]; then
+              echo "::error::Could not look up $tag"
+              exit 1
+            fi
+            sh .github/scripts/changelog-section.sh "$(dirname "$manifest")/CHANGELOG.md" "$version" > notes.md
+            sh .github/scripts/publish-release.sh "$tag" notes.md
+          done
