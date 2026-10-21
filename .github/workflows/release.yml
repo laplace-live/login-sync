@@ -14,6 +14,8 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    outputs:
+      published-packages: ${{ steps.changesets.outputs.published-packages }}
 
     steps:
       - uses: actions/checkout@v7
@@ -55,17 +57,48 @@ jobs:
           permission-pull-requests: write
 
       - name: Create release PR or push tags
+        id: changesets
         uses: changesets/action@v2
         with:
           publish-script: bun run release
           version-script: bun run version
-          # Create one GitHub Release per package tag, with the new
-          # changelog entry as the release body. Per-package publish
-          # workflows append their built artifacts to these releases.
-          create-github-releases: true
+          # Releases are immutable once published, so nothing can be attached
+          # afterwards: the action only pushes tags, and each release is
+          # published whole, by github-releases below or, with its zips, by
+          # extension.yml, which the pushed extension tag fires.
+          create-github-releases: false
           commit-message: "chore: version packages [skip ci]"
           pr-title: "chore: version packages"
-          # Used for the version PR, tags and GitHub Releases, so the tags
-          # trigger extension.yml. v2 reads the token only from this input,
+          # Used for the version PR and tags, so the tags trigger
+          # extension.yml. v2 reads the token only from this input,
           # not from the `GITHUB_TOKEN` env var.
           github-token: ${{ steps.app-token.outputs.token }}
+
+  github-releases:
+    needs: release
+    if: needs.release.outputs.published-packages != '[]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Publish a release per tagged package
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PUBLISHED: ${{ needs.release.outputs.published-packages }}
+        run: |
+          # The extension's release is published by extension.yml, with its zips attached.
+          echo "$PUBLISHED" | jq -c '.[] | select(.name != "laplace-login-sync")' | while read -r pkg; do
+            name=$(echo "$pkg" | jq -r .name)
+            version=$(echo "$pkg" | jq -r .version)
+            for manifest in apps/*/package.json packages/*/package.json; do
+              [ "$(jq -r .name "$manifest")" = "$name" ] && dir=$(dirname "$manifest")
+            done
+            sh .github/scripts/changelog-section.sh "$dir/CHANGELOG.md" "$version" > notes.md
+            if [ ! -s notes.md ]; then
+              echo "::error::No CHANGELOG entry for $name@$version"
+              exit 1
+            fi
+            gh release create "$name@$version" --verify-tag --title "$name@$version" --notes-file notes.md
+          done
