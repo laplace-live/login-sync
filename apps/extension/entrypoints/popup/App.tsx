@@ -111,7 +111,7 @@ function App() {
 
   return (
     <div className='w-lg overflow-x-hidden bg-white dark:bg-neutral-800' style={{ width: '360px' }}>
-      <div className='space-y-2 p-3 text-line text-neutral-800 dark:text-neutral-200'>
+      <div className='text-line space-y-2 p-3 text-neutral-800 dark:text-neutral-200'>
         {loadError && (
           <Alert tint='danger'>
             <div className='space-y-2'>
@@ -190,7 +190,7 @@ function App() {
                   <p className='text-fg/60'>{browser.i18n.getMessage('resetDesc')}</p>
 
                   {previousConfig && (
-                    <div className='space-y-2 border-fg/10 border-t pt-2'>
+                    <div className='space-y-2 border-t border-fg/10 pt-2'>
                       <Button tint='accent' size='sm' onClick={handleRestore} disabled={isBusy}>
                         {browser.i18n.getMessage('restorePrevious')}
                       </Button>

@@ -53,7 +53,7 @@ function Alert({ className, tint, children, label, icon, ...props }: React.Compo
           </div>
         )}
         <div className='w-full'>
-          {label && <h5 className='font-medium leading-tight tracking-tight'>{label}</h5>}
+          {label && <h5 className='leading-tight font-medium tracking-tight'>{label}</h5>}
           {content}
         </div>
       </div>

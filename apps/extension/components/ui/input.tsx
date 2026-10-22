@@ -6,7 +6,7 @@ const inputVariants = cva(
   [
     'w-full appearance-none border border-fg/30 bg-transparent',
     'text-fg shadow-xs outline-hidden placeholder:text-fg/40',
-    'file:inline-flex file:h-7 file:border-0 file:bg-transparent file:font-medium file:text-sm',
+    'file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium',
     'focus-ring',
     'disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50',
     'aria-invalid:border-rose-500 aria-invalid:ring-rose-500/30',

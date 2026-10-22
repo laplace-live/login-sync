@@ -31,16 +31,16 @@ const buttonTints = [
 ] as const
 
 const buttonVariants = cva(
-  'focus-ring inline-flex appearance-none items-center justify-center gap-1 whitespace-nowrap border font-medium focus-visible:border-current disabled:cursor-not-allowed disabled:opacity-50',
+  'inline-flex appearance-none items-center justify-center gap-1 border font-medium whitespace-nowrap focus-ring focus-visible:border-current disabled:cursor-not-allowed disabled:opacity-50',
   {
     variants: {
       // Should match Input, Toggle
       size: {
-        xs: 'h-6 rounded-md px-1.5 text-xs has-[>[data-kbd=only]]:px-0.75 has-[>[data-kbd=inline-end]]:pr-0.75 has-data-[icon=inline-end]:pr-1.5 has-[>[data-kbd=inline-start]]:pl-0.75 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*="size-"])]:size-3',
-        sm: 'h-7 rounded-md px-2 text-[0.8rem] has-[>[data-kbd=only]]:px-1 has-[>[data-kbd=inline-end]]:pr-1 has-data-[icon=inline-end]:pr-1.5 has-[>[data-kbd=inline-start]]:pl-1 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*="size-"])]:size-3',
+        xs: 'h-6 rounded-md px-1.5 text-xs has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 has-[>[data-kbd=inline-end]]:pr-0.75 has-[>[data-kbd=inline-start]]:pl-0.75 has-[>[data-kbd=only]]:px-0.75 [&_svg:not([class*="size-"])]:size-3',
+        sm: 'h-7 rounded-md px-2 text-[0.8rem] has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 has-[>[data-kbd=inline-end]]:pr-1 has-[>[data-kbd=inline-start]]:pl-1 has-[>[data-kbd=only]]:px-1 [&_svg:not([class*="size-"])]:size-3',
         default:
-          'h-8 rounded-lg px-2.5 text-sm has-[>[data-kbd=only]]:px-1.5 has-[>[data-kbd=inline-end]]:pr-1.5 has-data-[icon=inline-end]:pr-2 has-[>[data-kbd=inline-start]]:pl-1.5 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*="size-"])]:size-4',
-        lg: 'h-10 gap-2 rounded-lg px-3.5 text-base has-[>[data-kbd=only]]:px-2 has-[>[data-kbd=inline-end]]:pr-2 has-data-[icon=inline-end]:pr-2 has-[>[data-kbd=inline-start]]:pl-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*="size-"])]:size-5',
+          'h-8 rounded-lg px-2.5 text-sm has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 has-[>[data-kbd=inline-end]]:pr-1.5 has-[>[data-kbd=inline-start]]:pl-1.5 has-[>[data-kbd=only]]:px-1.5 [&_svg:not([class*="size-"])]:size-4',
+        lg: 'h-10 gap-2 rounded-lg px-3.5 text-base has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 has-[>[data-kbd=inline-end]]:pr-2 has-[>[data-kbd=inline-start]]:pl-2 has-[>[data-kbd=only]]:px-2 [&_svg:not([class*="size-"])]:size-5',
         'icon-xs': 'size-6 rounded-md [&_svg:not([class*="size-"])]:size-4',
         'icon-sm': 'size-7 rounded-md [&_svg:not([class*="size-"])]:size-4.5',
         icon: 'size-8 rounded-lg [&_svg:not([class*="size-"])]:size-5',

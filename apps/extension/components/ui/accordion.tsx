@@ -164,7 +164,7 @@ export function AccordionContent({
       data-slot='accordion-content'
       className={cn(
         'overflow-hidden transition-[height]',
-        'data-closed:animate-accordion-up data-open:animate-accordion-down'
+        'data-open:animate-accordion-down data-closed:animate-accordion-up'
       )}
       {...props}
     >
