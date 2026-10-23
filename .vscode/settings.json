@@ -29,6 +29,9 @@
   "[tailwindcss]": {
     "editor.defaultFormatter": "biomejs.biome"
   },
+  "[yaml]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
   "tailwindCSS.classFunctions": [
     // https://cva.style/docs/getting-started/installation
     "cva",
